@@ -1,0 +1,6 @@
+downloads/
+*.zip
+*.exe
+node_modules/
+.git/
+

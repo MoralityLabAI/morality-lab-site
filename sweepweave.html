@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sweepweave App | Morality Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f2f5f8;
+      --card: #ffffff;
+      --ink: #0f2742;
+      --muted: #4a627a;
+      --line: #dbe5ef;
+      --teal: #06a89d;
+      --gold: #dca317;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(6,168,157,0.18), transparent 35%),
+        radial-gradient(circle at 88% 12%, rgba(220,163,23,0.22), transparent 34%),
+        var(--bg);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 1.2rem; }
+    .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
+    .top a { color: var(--ink); text-decoration: none; }
+    h1 { margin: 0.4rem 0 0.8rem; font-size: clamp(1.8rem, 4vw, 3rem); }
+    .lead { color: var(--muted); max-width: 72ch; }
+    .grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 1.2rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 1rem; }
+    .tag { font-size: 0.78rem; text-transform: uppercase; color: var(--teal); }
+    .card h2 { margin: 0.4rem 0; font-size: 1.1rem; }
+    .card p { color: var(--muted); margin: 0.2rem 0 0.8rem; }
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      background: var(--ink);
+      color: #fff;
+      padding: 0.55rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .btn.alt { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .meta { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--muted); }
+    .warn { color: #9d5b00; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <a href="index.html">← Back to Morality Lab</a>
+      <a href="https://github.com/MoralityLab/sweepweave-ts" target="_blank" rel="noopener noreferrer">Sweepweave-TS Repo ↗</a>
+    </div>
+
+    <h1>Sweepweave Desktop App</h1>
+    <p class="lead">
+      Direct Electron builds for Sweepweave are hosted here. Windows builds are ready now. Linux has a tarball build.
+      macOS binaries are published from GitHub Actions on tagged releases.
+    </p>
+    <p class="lead">
+      Latest cross-platform release feed:
+      <a href="https://github.com/MoralityLab/sweepweave-ts/releases/latest" target="_blank" rel="noopener noreferrer">github.com/MoralityLab/sweepweave-ts/releases/latest</a>
+    </p>
+
+    <div class="grid">
+      <section class="card">
+        <div class="tag">Windows</div>
+        <h2>Installer and Portable</h2>
+        <p>Hosted via GitHub Releases for reliable distribution outside static-site size limits.</p>
+        <a class="btn" href="https://github.com/MoralityLab/sweepweave-ts/releases/latest" target="_blank" rel="noopener noreferrer">Download Installer (.exe)</a>
+        <a class="btn alt" href="https://github.com/MoralityLab/sweepweave-ts/releases/latest" target="_blank" rel="noopener noreferrer">Download Portable (.exe)</a>
+        <div class="meta">Use latest release assets list for current Windows binaries.</div>
+      </section>
+
+      <section class="card">
+        <div class="tag">Linux</div>
+        <h2>Tarball Build</h2>
+        <p>Linux assets are published on tagged releases from CI runners.</p>
+        <a class="btn" href="https://github.com/MoralityLab/sweepweave-ts/releases/latest" target="_blank" rel="noopener noreferrer">Download Linux Assets</a>
+        <div class="meta">Includes tar.gz and AppImage when available from CI.</div>
+      </section>
+
+      <section class="card">
+        <div class="tag">macOS</div>
+        <h2>Build Pending</h2>
+        <p>Electron macOS targets cannot be produced from a Windows build host.</p>
+        <a class="btn alt" href="https://github.com/MoralityLab/sweepweave-ts/releases/latest" target="_blank" rel="noopener noreferrer">Open Latest Release</a>
+        <div class="meta warn">Published from native macOS CI runner on tags like v0.1.1.</div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

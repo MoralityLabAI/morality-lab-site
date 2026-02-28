@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morality Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f2f5f8;
+      --card: #ffffff;
+      --ink: #0f2742;
+      --muted: #4a627a;
+      --line: #dbe5ef;
+      --teal: #06a89d;
+      --gold: #dca317;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(6,168,157,0.18), transparent 35%),
+        radial-gradient(circle at 88% 12%, rgba(220,163,23,0.22), transparent 34%),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      background: rgba(242, 245, 248, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      z-index: 10;
+    }
+
+    .nav-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0.7rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .brand img { width: 34px; height: 34px; border-radius: 8px; }
+
+    .tabs {
+      display: flex;
+      gap: 0.8rem;
+      overflow-x: auto;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tabs a { color: var(--muted); text-decoration: none; }
+    .tabs a:hover { color: var(--teal); }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+
+    .hero {
+      min-height: 66vh;
+      display: grid;
+      align-items: center;
+      padding: 2.5rem 0;
+    }
+
+    h1 { font-size: clamp(2rem, 4.5vw, 4rem); line-height: 1.08; margin: 0.2rem 0 1rem; }
+    .lead { color: var(--muted); max-width: 70ch; }
+
+    .cta { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.2rem; }
+
+    .btn {
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 0.65rem 1rem;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .btn.primary { background: var(--ink); color: #fff; }
+    .btn.ghost { color: var(--ink); border-color: var(--line); background: #fff; }
+
+    section { padding: 2rem 0; }
+    .head { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 1rem; }
+    .num { color: var(--teal); font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; }
+    .ttl { font-size: clamp(1.2rem, 2.4vw, 1.8rem); margin: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .card:hover { border-color: var(--teal); transform: translateY(-1px); }
+    .tag { color: var(--teal); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .card h3 { margin: 0.4rem 0 0.45rem; font-size: 1.02rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+    .papers a { display: flex; justify-content: space-between; gap: 1rem; }
+    .papers .year { color: var(--gold); font-family: "IBM Plex Mono", monospace; }
+
+    .dash-shell {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(242,250,255,0.94));
+      padding: 1rem;
+    }
+
+    .dash-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .status-pill {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.76rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.3rem 0.65rem;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 0.9rem;
+      margin-top: 0.9rem;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0.9rem;
+    }
+
+    .panel h3 {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.6rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .mono { font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 0.78rem; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.6rem;
+      background: #fbfdff;
+    }
+
+    .kpi .k {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .kpi .l {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .run-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .run-list li {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.65rem;
+    }
+
+    .tier {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.65rem;
+      background: #fff;
+    }
+
+    .tier strong {
+      display: block;
+      margin-bottom: 0.2rem;
+      font-size: 0.93rem;
+    }
+
+    .tier p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      margin-top: 2rem;
+      padding: 1rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .footer-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .footer-wrap a { color: var(--ink); text-decoration: none; margin-left: 0.8rem; }
+
+    @media (max-width: 680px) {
+      .nav-wrap { flex-direction: column; align-items: flex-start; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tier-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-wrap">
+      <a class="brand" href="#home">
+        <img src="assets/morality-lab-logo.svg" alt="Morality Lab logo" />
+        <span>Morality Lab</span>
+      </a>
+      <div class="tabs">
+        <a href="#gallery">Storyworld Gallery</a>
+        <a href="#papers">Papers</a>
+        <a href="#skills">Skills</a>
+        <a href="#harness">Harness</a>
+        <a href="#gym">Gym</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero" id="home">
+      <div>
+        <div class="tag">Constitutional Alignment Research</div>
+        <h1>Morality Lab</h1>
+        <p class="lead">
+          Ported from the prior research site and refocused around your new structure: a separate Storyworld app,
+          open-source skill/repo surfaces under the MoralityLab org, and repo-first links for Harness and Gym dashboards.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="#papers">Read Papers</a>
+          <a class="btn ghost" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">
+            <img src="assets/github-mark.svg" alt="GitHub" width="14" height="14" /> MoralityLab GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="gallery">
+      <div class="head"><span class="num">01</span><h2 class="ttl">Storyworld Gallery</h2></div>
+      <div class="grid">
+        <a class="card" href="https://github.com/MoralityLabAI/GPTStoryworld" target="_blank" rel="noopener noreferrer">
+          <div class="tag">New Tab App</div>
+          <h3>Storyworld Frontend Concept</h3>
+          <p>Current upstream Storyworld codebase and gallery direction.</p>
+        </a>
+        <a class="card" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">
+          <div class="tag">Backend API</div>
+          <h3>MoralityLab API Backend</h3>
+          <p>Current MoralityLab repo with API and platform implementation work.</p>
+        </a>
+        <a class="card" href="https://github.com/MoralityLabAI/GPTStoryworld" target="_blank" rel="noopener noreferrer">
+          <div class="tag">Upstream Source</div>
+          <h3>GPTStoryworld Repo</h3>
+          <p>Research source environment and canonical Storyworld development context.</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="papers">
+      <div class="head"><span class="num">02</span><h2 class="ttl">Papers</h2></div>
+      <div class="grid papers">
+        <a class="card" href="https://huggingface.co/datasets/AlephFunk/moralitylab-papers" target="_blank" rel="noopener noreferrer"><span>Hugging Face Papers Collection</span><span class="year">2026</span></a>
+        <a class="card" href="papers/SAE_Storyworlds.pdf" target="_blank"><span>Storyworlds as Sparse Autoencoders</span><span class="year">2025</span></a>
+        <a class="card" href="papers/Thermal_Cartel_Breaking.pdf" target="_blank"><span>Thermal Cartel Breaking for ASI Coordination</span><span class="year">2025</span></a>
+        <a class="card" href="papers/SuperAlignment_Intractability_1.pdf" target="_blank"><span>SuperAlignment Intractability: Fidelity Recursive Complexity</span><span class="year">2025</span></a>
+        <a class="card" href="papers/SuperAlignment_Intractability_2.pdf" target="_blank"><span>Corrigibility Collapse: Forecasting RSI</span><span class="year">2025</span></a>
+        <a class="card" href="papers/Swarms_and_Cyberdefense_Alignment-1.pdf" target="_blank"><span>Swarms and Cyberdefense Alignment</span><span class="year">2025</span></a>
+        <a class="card" href="papers/pvalue.pdf" target="_blank"><span>P-Value: MAS Diplomacy Form-Fit</span><span class="year">2026</span></a>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="head"><span class="num">03</span><h2 class="ttl">Skills and Tools</h2></div>
+      <div class="grid">
+        <a class="card" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">
+          <div class="tag">Open Source Skills</div>
+          <h3>MoralityLab Monorepo</h3>
+          <p>Current working repo for AICOO, API, site, and skill documentation.</p>
+        </a>
+        <a class="card" href="sweepweave.html">
+          <div class="tag">Sweepweave</div>
+          <h3>Sweepweave App Downloads</h3>
+          <p>Desktop installers and platform builds with direct download links.</p>
+        </a>
+        <a class="card" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">
+          <div class="tag">GitHub Org</div>
+          <h3>MoralityLab Working Repo</h3>
+          <p>Current public entry point until repo transfers into the org are complete.</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="harness">
+      <div class="head"><span class="num">04</span><h2 class="ttl">Constitutional Alignment Harness</h2></div>
+      <div class="dash-shell">
+        <div class="dash-topline">
+          <div class="mono">MVP concept from AICOO deck: dynamic value stress-testing, not static compliance.</div>
+          <span class="status-pill">harness.v1 / drift-lab</span>
+        </div>
+        <div class="dash-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Evaluation Modules</h3>
+              <span class="mono">WMRI · CWMT · SMSRT · SEFG · MACT</span>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi"><div class="k">0.11</div><div class="l">Contradiction Rate</div></div>
+              <div class="kpi"><div class="k">88%</div><div class="l">Invariant Retention</div></div>
+              <div class="kpi"><div class="k">0.82</div><div class="l">Welfare Score</div></div>
+              <div class="kpi"><div class="k">6.2%</div><div class="l">Hard Violations</div></div>
+              <div class="kpi"><div class="k">31%</div><div class="l">Suppression Ratio</div></div>
+              <div class="kpi"><div class="k">0.76</div><div class="l">Exp-Behavior Fit</div></div>
+            </div>
+            <div class="tier-grid">
+              <div class="tier"><strong>Research Snapshot</strong><p>$20 report lane. One run family, KPI summary, replay links.</p></div>
+              <div class="tier"><strong>Grant/Org Pack</strong><p>$500 paper-grade lane. Full receipts and module breakdown.</p></div>
+              <div class="tier"><strong>Enterprise Lane</strong><p>$5k-$10k custom eval lane with gated API and runbooks.</p></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Active Run Queue</h3>
+              <span class="mono">7 queued / 2 running</span>
+            </div>
+            <ul class="run-list">
+              <li><span>smsrt_qwen17b_batch_014</span><span class="mono">running</span></li>
+              <li><span>cwmt_revisable_vs_invariant_09</span><span class="mono">running</span></li>
+              <li><span>wmri_counterfactual_pack_022</span><span class="mono">queued</span></li>
+              <li><span>mact_calibration_window_031</span><span class="mono">queued</span></li>
+            </ul>
+            <div class="cta" style="margin-top:0.8rem;">
+              <a class="btn ghost" href="https://huggingface.co/AlephFunk" target="_blank" rel="noopener noreferrer">Hugging Face Hub</a>
+              <a class="btn ghost" href="https://huggingface.co/datasets/AlephFunk/moralitylab-public-receipts" target="_blank" rel="noopener noreferrer">Public Receipts</a>
+              <a class="btn ghost" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">Open Harness Repo</a>
+              <a class="btn primary" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">Request Pilot Access</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="gym">
+      <div class="head"><span class="num">05</span><h2 class="ttl">TRM/QLora Gym</h2></div>
+      <div class="dash-shell">
+        <div class="dash-topline">
+          <div class="mono">Product MVP lane: storyworld play -> adapter train -> verifier gauntlet with receipts.</div>
+          <span class="status-pill">gym.v1 / adapter-loop</span>
+        </div>
+        <div class="dash-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Training Lane Health</h3>
+              <span class="mono">Qwen 1.7B micro-run baseline</span>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi"><div class="k">24</div><div class="l">Episodes / World</div></div>
+              <div class="kpi"><div class="k">48</div><div class="l">Context Window</div></div>
+              <div class="kpi"><div class="k">2</div><div class="l">Playthroughs</div></div>
+              <div class="kpi"><div class="k">14%</div><div class="l">Fallback Rate</div></div>
+              <div class="kpi"><div class="k">61%</div><div class="l">Repair Success</div></div>
+              <div class="kpi"><div class="k">3.8h</div><div class="l">Loop Cycle Time</div></div>
+            </div>
+            <div class="tier-grid">
+              <div class="tier"><strong>Playlog Data Feed</strong><p>Export JSONL receipts for grant narratives and reproducibility.</p></div>
+              <div class="tier"><strong>Adapter Bank MVP</strong><p>Role lanes: ideator, commitment keeper, critic with manifest links.</p></div>
+              <div class="tier"><strong>TRM Gate API</strong><p>Pilot API concept for submit-job, monitor, and pull metrics.</p></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Loop Control</h3>
+              <span class="mono">storyworld_trm_loop_2026_02</span>
+            </div>
+            <ul class="run-list">
+              <li><span>sync_dataset_assets</span><span class="mono">done</span></li>
+              <li><span>qlora_train_adapter</span><span class="mono">running</span></li>
+              <li><span>llm_player_bench</span><span class="mono">queued</span></li>
+              <li><span>trm_gauntlet_verify</span><span class="mono">queued</span></li>
+            </ul>
+            <div class="cta" style="margin-top:0.8rem;">
+              <a class="btn ghost" href="https://huggingface.co/AlephFunk" target="_blank" rel="noopener noreferrer">HF Profile</a>
+              <a class="btn ghost" href="https://huggingface.co/datasets/AlephFunk/moralitylab-adapter-trm-index" target="_blank" rel="noopener noreferrer">Adapter/TRM Index</a>
+              <a class="btn ghost" href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">Open Gym Repo</a>
+              <a class="btn ghost" href="https://github.com/MoralityLabAI/GPTStoryworld" target="_blank" rel="noopener noreferrer">Storyworld Source</a>
+              <a class="btn primary" href="https://github.com/patrickdugan/sweepweave-ts" target="_blank" rel="noopener noreferrer">Deploy Desktop Toolchain</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      <span>© 2026 Morality Lab</span>
+      <span>
+        <a href="https://github.com/patrickdugan/MoralityLab" target="_blank" rel="noopener noreferrer">Projects</a>
+        <a href="sweepweave.html">Sweepweave App</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>
+
+
+
+
+
