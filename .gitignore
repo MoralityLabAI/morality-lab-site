@@ -2,3 +2,6 @@
 downloads/
 
 .vercel
+storyworld-app/node_modules/
+storyworld-app/dist/
+storyworld-app/.vercel/
