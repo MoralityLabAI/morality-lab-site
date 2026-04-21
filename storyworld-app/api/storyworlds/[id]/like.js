@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { methodNotAllowed, sendJson } from '../../_lib.js';
+import { hasPostgresConfig, methodNotAllowed, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,6 +7,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+      });
+    }
+
     const { id, action } = req.query;
 
     if (action === 'like') {

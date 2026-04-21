@@ -33,3 +33,11 @@ export function parseNumber(value, fallback) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
+
+export function hasPostgresConfig() {
+  return Boolean(
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING
+  );
+}

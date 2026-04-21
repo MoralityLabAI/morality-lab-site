@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { methodNotAllowed, sendJson } from '../_lib.js';
+import { hasPostgresConfig, methodNotAllowed, sendJson } from '../_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,6 +7,21 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+        stats: {
+          total_storyworlds: 0,
+          total_views: 0,
+          total_likes: 0,
+          total_forks: 0,
+        },
+        trending: [],
+        recent: [],
+        popular: [],
+      });
+    }
+
     const statsResult = await sql`
       SELECT
         COUNT(*) AS total_storyworlds,

@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { methodNotAllowed, parseNumber, readJsonBody, sendJson } from '../_lib.js';
+import { hasPostgresConfig, methodNotAllowed, parseNumber, readJsonBody, sendJson } from '../_lib.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -15,6 +15,12 @@ export default async function handler(req, res) {
 
 async function createStoryworld(req, res) {
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+      });
+    }
+
     const body = await readJsonBody(req);
     const {
       title,
@@ -80,6 +86,16 @@ async function createStoryworld(req, res) {
 
 async function listStoryworlds(req, res) {
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+        storyworlds: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      });
+    }
+
     const limit = parseNumber(req.query.limit, 20);
     const offset = parseNumber(req.query.offset, 0);
     const sort = req.query.sort || 'created_at';

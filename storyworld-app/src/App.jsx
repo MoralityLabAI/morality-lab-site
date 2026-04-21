@@ -15,7 +15,6 @@ function App() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState('');
-  const [fallbackApiKey, setFallbackApiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
   const handleSliderChange = (field, value) => {
     setConfig(prev => ({ ...prev, [field]: parseInt(value) }));
@@ -75,12 +74,7 @@ Structure each output as JSON with: {
         const payload = data.parsed || parseGeneratedContent(data.content) || data;
         downloadStoryworld(payload);
       } else {
-        const serverMissingKey = String(data.error || '').includes('OPENAI_API_KEY');
-        if (serverMissingKey && fallbackApiKey) {
-          await generateWithBrowserKey(systemPrompt, fallbackApiKey);
-        } else {
-          alert(`API Error: ${data.error || data.details?.error?.message || 'Unknown error'}`);
-        }
+        alert(`API Error: ${data.error || data.details?.error?.message || 'Unknown error'}`);
       }
     } catch (error) {
       alert(`Error: ${error.message}`);
@@ -110,34 +104,6 @@ Structure each output as JSON with: {
     a.click();
     URL.revokeObjectURL(url);
     setStatus('Storyworld JSON generated and downloaded.');
-  };
-
-  const generateWithBrowserKey = async (systemPrompt, apiKey) => {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate the first encounter of this storyworld.' }
-        ],
-        temperature: 0.8,
-        max_tokens: config.encounterLength * 2
-      })
-    });
-
-    const data = await response.json();
-    if (data.error) {
-      alert(`API Error: ${data.error.message}`);
-      return;
-    }
-
-    const payload = parseGeneratedContent(data?.choices?.[0]?.message?.content) || data;
-    downloadStoryworld(payload);
   };
 
   return (
@@ -313,7 +279,7 @@ Structure each output as JSON with: {
                 <label>Generation Mode</label>
                 <p className="help-text">
                   This deployment uses server-side generation with the org OpenAI key.
-                  No browser-stored API key is required when the Vercel secret is present.
+                  No browser-stored API key is needed.
                 </p>
               </div>
               <div className="form-group">
@@ -322,29 +288,13 @@ Structure each output as JSON with: {
                   The standalone reader is available at <a href="/reader">/reader</a>.
                 </p>
               </div>
-              <div className="form-group">
-                <label>Optional Fallback Key</label>
-                <input
-                  type="password"
-                  value={fallbackApiKey}
-                  onChange={(e) => setFallbackApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="api-input"
-                />
-                <p className="help-text">
-                  Use this only if the server secret is not configured yet. It stays in this browser.
-                </p>
-              </div>
             </div>
             <div className="modal-footer">
-              <button 
+              <button
                 className="btn btn-primary"
-                onClick={() => {
-                  localStorage.setItem('openai_api_key', fallbackApiKey);
-                  setShowInfo(false);
-                }}
+                onClick={() => setShowInfo(false)}
               >
-                Save
+                Close
               </button>
             </div>
           </div>

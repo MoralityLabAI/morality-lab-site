@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { methodNotAllowed, readJsonBody, sendJson } from '../../_lib.js';
+import { hasPostgresConfig, methodNotAllowed, readJsonBody, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -19,6 +19,12 @@ export default async function handler(req, res) {
 
 async function getStoryworld(req, res) {
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+      });
+    }
+
     const { id } = req.query;
     const result = await sql`
       SELECT *
@@ -48,6 +54,12 @@ async function getStoryworld(req, res) {
 
 async function updateStoryworld(req, res) {
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+      });
+    }
+
     const { id } = req.query;
     const body = await readJsonBody(req);
     const updates = [];
@@ -100,6 +112,12 @@ async function updateStoryworld(req, res) {
 
 async function deleteStoryworld(req, res) {
   try {
+    if (!hasPostgresConfig()) {
+      return sendJson(res, 503, {
+        error: 'Storyworld database is not connected yet',
+      });
+    }
+
     const { id } = req.query;
     const result = await sql`
       DELETE FROM storyworlds
