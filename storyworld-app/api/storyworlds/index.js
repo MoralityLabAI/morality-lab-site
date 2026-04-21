@@ -103,8 +103,8 @@ async function listStoryworlds(req, res) {
     const allowedSorts = ['created_at', 'views', 'likes', 'fork_count'];
     const sortField = allowedSorts.includes(sort) ? sort : 'created_at';
 
-    const result = await sql`
-      SELECT
+    const result = await sql.query(
+      `SELECT
         id,
         title,
         description,
@@ -121,10 +121,11 @@ async function listStoryworlds(req, res) {
         created_at
       FROM storyworlds
       WHERE is_public = true
-      ORDER BY ${sql.raw(sortField)} ${sql.raw(order)}
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
+      ORDER BY ${sortField} ${order}
+      LIMIT $1
+      OFFSET $2`,
+      [limit, offset]
+    );
 
     const countResult = await sql`
       SELECT COUNT(*) AS total
