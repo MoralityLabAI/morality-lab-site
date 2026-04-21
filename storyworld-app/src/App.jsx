@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Eye, Play, Settings } from 'lucide-react';
 import './App.css';
 
@@ -11,18 +11,11 @@ function App() {
   });
   
   const [customPrompt, setCustomPrompt] = useState('');
-  const [showConfig, setShowConfig] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [showInfo, setShowInfo] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState('');
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
-  }, []);
+  const [fallbackApiKey, setFallbackApiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
   const handleSliderChange = (field, value) => {
     setConfig(prev => ({ ...prev, [field]: parseInt(value) }));
@@ -59,54 +52,92 @@ Structure each output as JSON with: {
   };
 
   const handleGenerate = async () => {
-    if (!apiKey) {
-      alert('Please configure your OpenAI API key in settings');
-      setShowConfig(true);
-      return;
-    }
-
     setIsGenerating(true);
     setStatus('');
     const systemPrompt = generateSystemPrompt();
     
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gpt-4.1',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: 'Generate the first encounter of this storyworld.' }
-          ],
-          temperature: 0.8,
-          max_tokens: config.encounterLength * 2
+          config,
+          custom_prompt: customPrompt,
+          system_prompt: systemPrompt
         })
       });
 
       const data = await response.json();
       
-      if (data.error) {
-        alert(`API Error: ${data.error.message}`);
+      if (response.ok && !data.error) {
+        const payload = data.parsed || parseGeneratedContent(data.content) || data;
+        downloadStoryworld(payload);
       } else {
-        // Download the result
-        const blob = new Blob([data.choices[0].message.content], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `storyworld_${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        setStatus('Storyworld JSON generated and downloaded.');
+        const serverMissingKey = String(data.error || '').includes('OPENAI_API_KEY');
+        if (serverMissingKey && fallbackApiKey) {
+          await generateWithBrowserKey(systemPrompt, fallbackApiKey);
+        } else {
+          alert(`API Error: ${data.error || data.details?.error?.message || 'Unknown error'}`);
+        }
       }
     } catch (error) {
       alert(`Error: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const parseGeneratedContent = (content) => {
+    if (!content || typeof content !== 'string') {
+      return null;
+    }
+
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  };
+
+  const downloadStoryworld = (payload) => {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `storyworld_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('Storyworld JSON generated and downloaded.');
+  };
+
+  const generateWithBrowserKey = async (systemPrompt, apiKey) => {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Generate the first encounter of this storyworld.' }
+        ],
+        temperature: 0.8,
+        max_tokens: config.encounterLength * 2
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      alert(`API Error: ${data.error.message}`);
+      return;
+    }
+
+    const payload = parseGeneratedContent(data?.choices?.[0]?.message?.content) || data;
+    downloadStoryworld(payload);
   };
 
   return (
@@ -119,8 +150,8 @@ Structure each output as JSON with: {
         </div>
         <button 
           className="config-btn"
-          onClick={() => setShowConfig(true)}
-          title="Configure API Key"
+          onClick={() => setShowInfo(true)}
+          title="Deployment info"
         >
           <Settings size={20} />
         </button>
@@ -269,27 +300,39 @@ Structure each output as JSON with: {
         </div>
       </main>
 
-      {/* Config Modal */}
-      {showConfig && (
-        <div className="modal-overlay" onClick={() => setShowConfig(false)}>
+      {/* Info Modal */}
+      {showInfo && (
+        <div className="modal-overlay" onClick={() => setShowInfo(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>API Configuration</h2>
-              <button onClick={() => setShowConfig(false)} className="close-btn">x</button>
+              <h2>Deployment Info</h2>
+              <button onClick={() => setShowInfo(false)} className="close-btn">x</button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>OpenAI API Key</label>
+                <label>Generation Mode</label>
+                <p className="help-text">
+                  This deployment uses server-side generation with the org OpenAI key.
+                  No browser-stored API key is required when the Vercel secret is present.
+                </p>
+              </div>
+              <div className="form-group">
+                <label>Reader</label>
+                <p className="help-text">
+                  The standalone reader is available at <a href="/reader">/reader</a>.
+                </p>
+              </div>
+              <div className="form-group">
+                <label>Optional Fallback Key</label>
                 <input
                   type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  value={fallbackApiKey}
+                  onChange={(e) => setFallbackApiKey(e.target.value)}
                   placeholder="sk-..."
                   className="api-input"
                 />
                 <p className="help-text">
-                  Your API key is stored locally and never sent anywhere except OpenAI.
-                  Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a>
+                  Use this only if the server secret is not configured yet. It stays in this browser.
                 </p>
               </div>
             </div>
@@ -297,9 +340,8 @@ Structure each output as JSON with: {
               <button 
                 className="btn btn-primary"
                 onClick={() => {
-                  localStorage.setItem('openai_api_key', apiKey);
-                  setStatus('OpenAI API key saved locally in this browser.');
-                  setShowConfig(false);
+                  localStorage.setItem('openai_api_key', fallbackApiKey);
+                  setShowInfo(false);
                 }}
               >
                 Save
