@@ -23,7 +23,7 @@ Each encounter should:
 
 ${customPrompt ? `\nAdditional Instructions:\n${customPrompt}` : ''}
 
-Structure the output as valid JSON with:
+Structure the output as valid json with:
 {
   "encounter": "narrative text",
   "choices": ["choice1", "choice2", "choice3"],
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
         model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate the first encounter of this storyworld.' },
+          { role: 'user', content: 'Generate the first encounter of this storyworld as json.' },
         ],
         temperature: 0.8,
         response_format: { type: 'json_object' },
@@ -93,11 +93,18 @@ export default async function handler(req, res) {
       }),
     });
 
-    const data = await response.json();
+    const raw = await response.text();
+    let data = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch {
+      data = null;
+    }
+
     if (!response.ok) {
       return sendJson(res, response.status, {
         error: data?.error?.message || 'OpenAI request failed',
-        details: data,
+        details: data || raw.slice(0, 500),
       });
     }
 
