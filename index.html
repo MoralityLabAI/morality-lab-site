@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morality Lab</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -19,6 +20,11 @@
     }
 
     * { box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 5.75rem;
+    }
+
     body {
       margin: 0;
       font-family: "Space Grotesk", sans-serif;
@@ -101,7 +107,11 @@
     .btn.primary { background: var(--ink); color: #fff; }
     .btn.ghost { color: var(--ink); border-color: var(--line); background: #fff; }
 
-    section { padding: 2rem 0; }
+    .hero,
+    section {
+      padding: 2rem 0;
+      scroll-margin-top: 5.75rem;
+    }
     .head { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 1rem; }
     .num { color: var(--teal); font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; }
     .ttl { font-size: clamp(1.2rem, 2.4vw, 1.8rem); margin: 0; }
