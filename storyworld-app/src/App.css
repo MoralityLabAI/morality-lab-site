@@ -448,3 +448,265 @@ body {
     margin: 1rem;
   }
 }
+
+/* Storyworld Library */
+.library {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 39, 66, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(244, 248, 252, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.library-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.library-head h2,
+.detail-head h3 {
+  color: #0f2742;
+  font-size: 1.4rem;
+  margin-top: 0.25rem;
+}
+
+.library-head p,
+.detail-head p {
+  margin-top: 0.4rem;
+  color: #5b6c7a;
+  line-height: 1.6;
+}
+
+.library-refresh,
+.mini-link {
+  white-space: nowrap;
+}
+
+.library-stats,
+.detail-meta,
+.story-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.stat-chip,
+.metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: #eef5fa;
+  color: #0f2742;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.library-stats {
+  margin: 1rem 0 1.25rem;
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.library-list,
+.library-detail {
+  min-width: 0;
+}
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.story-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(15, 39, 66, 0.12);
+  border-radius: 18px;
+  background: white;
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.story-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(6, 168, 157, 0.35);
+  box-shadow: 0 14px 28px rgba(15, 39, 66, 0.08);
+}
+
+.story-card.active {
+  border-color: rgba(6, 168, 157, 0.7);
+  box-shadow: 0 16px 32px rgba(6, 168, 157, 0.12);
+}
+
+.story-card-top,
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.story-card h3 {
+  margin-top: 0.2rem;
+  color: #0f2742;
+  font-size: 1.05rem;
+}
+
+.story-card p,
+.detail-copy,
+.empty-state {
+  color: #526171;
+  line-height: 1.6;
+}
+
+.story-date {
+  flex-shrink: 0;
+  color: #7b8b98;
+  font-size: 0.85rem;
+}
+
+.story-metrics {
+  margin-top: 0.85rem;
+}
+
+.library-detail {
+  border-radius: 18px;
+  border: 1px solid rgba(15, 39, 66, 0.12);
+  background: linear-gradient(180deg, rgba(15, 39, 66, 0.03) 0%, rgba(255, 255, 255, 0.94) 100%);
+  padding: 1.2rem;
+  min-height: 100%;
+}
+
+.detail-section + .detail-section {
+  margin-top: 1rem;
+}
+
+.detail-section h4 {
+  color: #0f2742;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.choice-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.choice-list li {
+  padding: 0.8rem 0.9rem;
+  border-left: 3px solid #06a89d;
+  background: rgba(6, 168, 157, 0.08);
+  border-radius: 0 12px 12px 0;
+  color: #243949;
+}
+
+.story-pre {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 14px;
+  background: #0f2742;
+  color: #e8f0f6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.empty-state {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.25rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(15, 39, 66, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mini-link {
+  border: 1px solid rgba(15, 39, 66, 0.18);
+  background: white;
+  color: #0f2742;
+  padding: 0.6rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.mini-link:hover {
+  background: #eef5fa;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+  .library-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .library {
+    padding: 1rem;
+  }
+
+  .library-head,
+  .story-card-top,
+  .detail-head {
+    flex-direction: column;
+  }
+
+  .library-refresh,
+  .mini-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .story-date {
+    align-self: flex-start;
+  }
+
+  .story-metrics,
+  .detail-meta,
+  .library-stats {
+    gap: 0.5rem;
+  }
+
+  .stat-chip,
+  .metric {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .story-card {
+    padding: 0.9rem;
+  }
+
+  .library-detail {
+    padding: 1rem;
+  }
+
+  .choice-list li,
+  .story-pre {
+    font-size: 0.82rem;
+  }
+}

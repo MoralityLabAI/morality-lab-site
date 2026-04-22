@@ -2,6 +2,7 @@
 downloads/
 
 .vercel
+codex-chat-sessions/
 storyworld-app/node_modules/
 storyworld-app/dist/
 storyworld-app/.vercel/
