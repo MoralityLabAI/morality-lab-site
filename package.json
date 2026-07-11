@@ -1,0 +1,11 @@
+{
+  "name": "morality-lab-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix storyworld-app ci && npm --prefix storyworld-app run build && node scripts/build-site.mjs"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  }
+}

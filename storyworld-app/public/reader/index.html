@@ -928,6 +928,21 @@
       reader.readAsText(file);
     }
 
+    async function loadWorldFromUrl() {
+      const worldUrl = new URLSearchParams(window.location.search).get('world');
+      if (!worldUrl || !worldUrl.startsWith('/storyworlds/')) return;
+
+      elements.loadingScreen.classList.remove('hidden');
+      try {
+        const response = await fetch(worldUrl);
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        startGame(await response.json());
+      } catch (err) {
+        alert('Failed to load storyworld: ' + err.message);
+        elements.loadingScreen.classList.add('hidden');
+      }
+    }
+
     function startGame(data) {
       engine.load(data);
       
@@ -941,6 +956,8 @@
       renderCharTabs();
       renderEncounter();
     }
+
+    loadWorldFromUrl();
 
     function renderEncounter() {
       const encounter = engine.getCurrentEncounter();

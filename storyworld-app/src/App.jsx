@@ -1,541 +1,198 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Eye, Layers3, Play, RefreshCw, Settings } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ArrowLeft, BookOpen, Check, ChevronRight, Heart, History, Home, ListPlus,
+  Play, Search, Sparkles, User, Users, X
+} from 'lucide-react';
 import './App.css';
 
-function App() {
-  const [config, setConfig] = useState({
-    numCharacters: 3,
-    numThemes: 2,
-    numVariables: 5,
-    encounterLength: 500
-  });
+const STORAGE_KEY = 'moralitylab.storyworld.profile.v1';
+const FILTERS = ['Featured', 'Historical', 'Diplomacy', 'Moral dilemmas', 'All worlds'];
+const FALLBACK_WORLDS = [
+  {
+    id: 'mihna', title: 'The Mihna', genre: 'Historical', theme: 'Constitutional alignment',
+    description: 'Baghdad, 833 CE. Navigate an inquisition where doctrine, conscience, and state power collide.',
+    size_category: 'Epic', views: 0, likes: 0, localPath: '/storyworlds/mihna_constitutional_alignment.json',
+    encounter: { encounter: 'The court is waiting. The Caliph has made belief a condition of public office, and every answer now carries a cost.', choices: ['Enter the council chamber', 'Seek Ibn Hanbal first', 'Review the decree'] }
+  }
+];
 
-  const [customPrompt, setCustomPrompt] = useState('');
-  const [showInfo, setShowInfo] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [status, setStatus] = useState('');
-  const [storyworlds, setStoryworlds] = useState([]);
-  const [selectedStoryworld, setSelectedStoryworld] = useState(null);
-  const [galleryLoading, setGalleryLoading] = useState(true);
-  const [galleryError, setGalleryError] = useState('');
-  const [galleryStats, setGalleryStats] = useState(null);
+function loadProfile() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function App() {
+  const [worlds, setWorlds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState('');
+  const [activeFilter, setActiveFilter] = useState('Featured');
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [profile, setProfile] = useState(loadProfile);
+  const [profileOpen, setProfileOpen] = useState(!loadProfile());
+  const [profileName, setProfileName] = useState(loadProfile()?.name || '');
+  const [view, setView] = useState('home');
 
   useEffect(() => {
-    void loadGallery();
+    Promise.allSettled([fetch('/api/storyworlds?limit=60'), fetch('/api/stats')])
+      .then(async ([catalogResult]) => {
+        if (catalogResult.status !== 'fulfilled' || !catalogResult.value.ok) throw new Error();
+        const data = await catalogResult.value.json();
+        const catalog = (data.storyworlds || []).map(normalizeWorld);
+        setWorlds(catalog.length ? catalog : FALLBACK_WORLDS);
+      })
+      .catch(() => {
+        setWorlds(FALLBACK_WORLDS);
+        setNotice('The live catalog is temporarily unavailable. Showing locally hosted worlds.');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleSliderChange = (field, value) => {
-    setConfig(prev => ({ ...prev, [field]: parseInt(value, 10) }));
+  useEffect(() => {
+    if (profile) localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+  }, [profile]);
+
+  const visibleWorlds = useMemo(() => worlds.filter(world => {
+    const text = `${world.title} ${world.description} ${world.genre} ${world.theme}`.toLowerCase();
+    const matchesQuery = text.includes(query.trim().toLowerCase());
+    const matchesFilter = activeFilter === 'All worlds' || activeFilter === 'Featured' ||
+      text.includes(activeFilter.toLowerCase().replace('moral dilemmas', 'moral'));
+    return matchesQuery && matchesFilter;
+  }), [worlds, query, activeFilter]);
+
+  const featured = visibleWorlds[0] || worlds[0];
+  const myList = worlds.filter(world => profile?.list?.includes(String(world.id)));
+  const recent = worlds.filter(world => profile?.history?.some(item => item.id === String(world.id)));
+
+  const updateProfile = changes => setProfile(current => ({
+    name: current?.name || 'Reader', list: current?.list || [], history: current?.history || [], ...current, ...changes
+  }));
+
+  const toggleList = world => {
+    const id = String(world.id);
+    const list = profile?.list || [];
+    updateProfile({ list: list.includes(id) ? list.filter(item => item !== id) : [...list, id] });
   };
 
-  const loadGallery = async () => {
-    setGalleryLoading(true);
-    setGalleryError('');
-
-    try {
-      const [storyworldResponse, statsResponse] = await Promise.all([
-        fetch('/api/storyworlds?limit=12'),
-        fetch('/api/stats')
-      ]);
-
-      const storyworldData = await storyworldResponse.json();
-      const statsData = await statsResponse.json();
-
-      if (!storyworldResponse.ok) {
-        throw new Error(storyworldData.error || 'Failed to load storyworlds');
-      }
-
-      if (!statsResponse.ok) {
-        throw new Error(statsData.error || 'Failed to load stats');
-      }
-
-      const nextStoryworlds = storyworldData.storyworlds || [];
-      setStoryworlds(nextStoryworlds);
-      setGalleryStats(statsData.stats || null);
-      setSelectedStoryworld(prev => {
-        if (prev) {
-          const preserved = nextStoryworlds.find(item => item.id === prev.id);
-          if (preserved) {
-            return preserved;
-          }
-        }
-
-        return nextStoryworlds[0] || null;
-      });
-    } catch (error) {
-      setGalleryError(error.message);
-      setStoryworlds([]);
-      setGalleryStats(null);
-      setSelectedStoryworld(null);
-    } finally {
-      setGalleryLoading(false);
+  const play = world => {
+    const id = String(world.id);
+    const history = [{ id, playedAt: new Date().toISOString() }, ...(profile?.history || []).filter(item => item.id !== id)].slice(0, 20);
+    updateProfile({ history });
+    if (world.localPath) {
+      window.location.href = `/storyworld/reader?world=${encodeURIComponent(world.localPath)}`;
+      return;
     }
+    setSelected(world);
   };
 
-  const generateSystemPrompt = () => {
-    const basePrompt = `You are a Sweepweave Storyworld generator. Create an interactive narrative environment with the following parameters:
-
-- Characters: ${config.numCharacters} distinct characters with unique motivations and relationships
-- Themes: ${config.numThemes} central thematic elements that weave through the narrative
-- Variables: ${config.numVariables} trackable state variables that affect story progression
-- Encounter Length: Approximately ${config.encounterLength} words per scene
-
-Each encounter should:
-1. Present meaningful choices that affect character relationships and tracked variables
-2. Maintain consistency with established lore and character personalities
-3. Create branching possibilities for future encounters
-4. Balance narrative coherence with player agency
-
-${customPrompt ? `\nAdditional Instructions:\n${customPrompt}` : ''}
-
-Structure each output as JSON with: {
-  "encounter": "narrative text",
-  "choices": ["choice1", "choice2", "choice3"],
-  "variables_affected": {"var_name": delta},
-  "metadata": {
-    "characters_present": [],
-    "themes_emphasized": [],
-    "narrative_weight": 0-10
-  }
-}`;
-
-    return basePrompt;
+  const saveProfile = event => {
+    event.preventDefault();
+    const name = profileName.trim();
+    if (!name) return;
+    updateProfile({ name });
+    setProfileOpen(false);
   };
-
-  const parseGeneratedContent = content => {
-    if (!content || typeof content !== 'string') {
-      return null;
-    }
-
-    try {
-      return JSON.parse(content);
-    } catch {
-      return null;
-    }
-  };
-
-  const downloadStoryworld = payload => {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `storyworld_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setStatus('Storyworld JSON generated and downloaded.');
-  };
-
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    setStatus('');
-
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          config,
-          custom_prompt: customPrompt,
-          system_prompt: generateSystemPrompt()
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        alert(`API Error: ${data.error || data.details?.error?.message || 'Unknown error'}`);
-        return;
-      }
-
-      const payload = data.parsed || parseGeneratedContent(data.content) || data;
-      downloadStoryworld(payload);
-      void loadGallery();
-    } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const selectedEncounter = selectedStoryworld ? getEncounterData(selectedStoryworld) : null;
-  const statChips = galleryStats
-    ? [
-        `${galleryStats.total_storyworlds || 0} storyworlds`,
-        `${galleryStats.total_views || 0} views`,
-        `${galleryStats.total_likes || 0} likes`,
-        `${galleryStats.total_forks || 0} forks`
-      ]
-    : [];
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <h1>Morality Lab Storyworld</h1>
-          <p>Generator, browse, and reader deployment package for Sweepweave-compatible storyworlds.</p>
+    <div className="app-shell">
+      <header className="topbar">
+        <a className="brand" href="/"><span className="brand-mark">ML</span><span>Storyworlds</span></a>
+        <nav aria-label="Storyworld navigation">
+          <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><Home size={17}/>Browse</button>
+          <button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')}><Heart size={17}/>My List</button>
+          <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}><History size={17}/>Continue</button>
+        </nav>
+        <div className="top-actions">
+          <label className="search"><Search size={17}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search worlds" aria-label="Search worlds"/></label>
+          <button className="profile-button" onClick={() => setProfileOpen(true)} title="Profile"><User size={18}/><span>{profile?.name || 'Profile'}</span></button>
         </div>
-        <button
-          className="config-btn"
-          onClick={() => setShowInfo(true)}
-          title="Deployment info"
-        >
-          <Settings size={20} />
-        </button>
       </header>
 
-      <main className="main-content">
-        <div className="controls-panel">
-          <div className="meta-row">
-            <a className="utility-link" href="/reader">
-              <BookOpen size={18} />
-              Open Reader
-            </a>
-            <a
-              className="utility-link"
-              href="https://github.com/MoralityLabAI/GPTStoryworld"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Source Repo
-            </a>
-          </div>
-
-          <div className="control-group">
-            <label>
-              <span className="label-text">Characters</span>
-              <span className="value">{config.numCharacters}</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={config.numCharacters}
-              onChange={(e) => handleSliderChange('numCharacters', e.target.value)}
-              className="slider"
-            />
-            <div className="range-labels">
-              <span>1</span>
-              <span>10</span>
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label>
-              <span className="label-text">Themes</span>
-              <span className="value">{config.numThemes}</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={config.numThemes}
-              onChange={(e) => handleSliderChange('numThemes', e.target.value)}
-              className="slider"
-            />
-            <div className="range-labels">
-              <span>1</span>
-              <span>5</span>
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label>
-              <span className="label-text">Tracked Variables</span>
-              <span className="value">{config.numVariables}</span>
-            </label>
-            <input
-              type="range"
-              min="3"
-              max="20"
-              value={config.numVariables}
-              onChange={(e) => handleSliderChange('numVariables', e.target.value)}
-              className="slider"
-            />
-            <div className="range-labels">
-              <span>3</span>
-              <span>20</span>
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label>
-              <span className="label-text">Encounter Length (words)</span>
-              <span className="value">{config.encounterLength}</span>
-            </label>
-            <input
-              type="range"
-              min="200"
-              max="1500"
-              step="50"
-              value={config.encounterLength}
-              onChange={(e) => handleSliderChange('encounterLength', e.target.value)}
-              className="slider"
-            />
-            <div className="range-labels">
-              <span>200</span>
-              <span>1500</span>
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label className="label-text">Additional Instructions</label>
-            <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="Add custom instructions to the system prompt..."
-              className="custom-prompt"
-              rows="6"
-            />
-          </div>
-
-          <div className="action-buttons">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowPrompt(true)}
-            >
-              <Eye size={18} />
-              Preview Prompt
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleGenerate}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>Generating...</>
-              ) : (
-                <>
-                  <Play size={18} />
-                  Generate Storyworld
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="library">
-            <div className="library-head">
-              <div>
-                <div className="tag">Browse Live Data</div>
-                <h2>Storyworld Library</h2>
-                <p>Browse the Neon-backed gallery and inspect the current encounter payloads.</p>
+      <main>
+        {view === 'home' && featured ? (
+          <>
+            <section className="hero">
+              <div className="hero-backdrop" aria-hidden="true" />
+              <div className="hero-content">
+                <span className="eyebrow"><Sparkles size={14}/>Featured Storyworld</span>
+                <h1>{featured.title}</h1>
+                <p>{featured.description}</p>
+                <div className="hero-meta"><span>{featured.genre}</span><span>{featured.size_category || 'Interactive'}</span><span>{featured.theme}</span></div>
+                <div className="hero-actions">
+                  <button className="primary" onClick={() => play(featured)}><Play size={19} fill="currentColor"/>Play</button>
+                  <button className="secondary" onClick={() => toggleList(featured)}>{profile?.list?.includes(String(featured.id)) ? <Check size={19}/> : <ListPlus size={19}/>}My List</button>
+                </div>
               </div>
-              <button className="btn btn-secondary library-refresh" onClick={() => void loadGallery()} disabled={galleryLoading}>
-                <RefreshCw size={16} />
-                {galleryLoading ? 'Loading' : 'Refresh'}
-              </button>
-            </div>
+            </section>
 
-            <div className="library-stats">
-              {statChips.map((chip) => (
-                <span className="stat-chip" key={chip}>
-                  <Layers3 size={14} />
-                  {chip}
-                </span>
-              ))}
-            </div>
-
-            <div className="library-grid">
-              <div className="library-list">
-                {galleryError ? (
-                  <div className="empty-state">{galleryError}</div>
-                ) : null}
-
-                {!galleryError && galleryLoading ? (
-                  <div className="empty-state">Loading storyworlds...</div>
-                ) : null}
-
-                {!galleryError && !galleryLoading && storyworlds.length === 0 ? (
-                  <div className="empty-state">No public storyworlds yet.</div>
-                ) : null}
-
-                {storyworlds.map((storyworld) => (
-                  <button
-                    className={`story-card ${selectedStoryworld?.id === storyworld.id ? 'active' : ''}`}
-                    key={storyworld.id}
-                    onClick={() => setSelectedStoryworld(storyworld)}
-                    type="button"
-                  >
-                    <div className="story-card-top">
-                      <div>
-                        <div className="tag">Storyworld</div>
-                        <h3>{storyworld.title}</h3>
-                        <p>{storyworld.description || 'No description provided.'}</p>
-                      </div>
-                      <span className="story-date">{formatDate(storyworld.created_at)}</span>
-                    </div>
-                    <div className="story-metrics">
-                      <span className="metric">{storyworld.num_characters} chars</span>
-                      <span className="metric">{storyworld.num_themes} themes</span>
-                      <span className="metric">{storyworld.views || 0} views</span>
-                      <span className="metric">{storyworld.likes || 0} likes</span>
-                    </div>
-                  </button>
-                ))}
+            <div className="catalog">
+              <div className="filter-row" role="tablist" aria-label="Catalog filters">
+                {FILTERS.map(filter => <button key={filter} className={activeFilter === filter ? 'active' : ''} onClick={() => setActiveFilter(filter)}>{filter}</button>)}
               </div>
-
-              <article className="library-detail">
-                {selectedStoryworld ? (
-                  <>
-                    <div className="detail-head">
-                      <div>
-                        <div className="tag">Selected Storyworld</div>
-                        <h3>{selectedStoryworld.title}</h3>
-                        <p>{selectedStoryworld.description || 'No description provided.'}</p>
-                      </div>
-                      <button className="mini-link" onClick={() => setShowPrompt(true)} type="button">
-                        Preview Prompt
-                      </button>
-                    </div>
-
-                    <div className="detail-meta">
-                      <span className="stat-chip"><Layers3 size={14} />{selectedStoryworld.model_used || 'gpt-4.1'}</span>
-                      <span className="stat-chip">{formatDate(selectedStoryworld.created_at)}</span>
-                      <span className="stat-chip">{selectedStoryworld.num_variables} variables</span>
-                    </div>
-
-                    <div className="detail-section">
-                      <h4>Encounter</h4>
-                      <p className="detail-copy">{selectedEncounter.text || 'No encounter text available.'}</p>
-                    </div>
-
-                    {selectedEncounter.choices.length > 0 ? (
-                      <div className="detail-section">
-                        <h4>Choices</h4>
-                        <ul className="choice-list">
-                          {selectedEncounter.choices.map((choice, index) => (
-                            <li key={`${choice}-${index}`}>{choice}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-
-                    <div className="detail-section">
-                      <h4>Metadata</h4>
-                      <pre className="story-pre">
-                        {JSON.stringify(selectedEncounter.metadata || {}, null, 2)}
-                      </pre>
-                    </div>
-                  </>
-                ) : (
-                  <div className="empty-state">
-                    Select a storyworld to inspect its encounter and metadata.
-                  </div>
-                )}
-              </article>
+              {notice && <p className="notice">{notice}</p>}
+              {recent.length > 0 && <WorldRow title="Continue playing" worlds={recent} onOpen={setSelected} onPlay={play} />}
+              <WorldRow title={activeFilter === 'Featured' ? 'Featured worlds' : activeFilter} worlds={visibleWorlds} onOpen={setSelected} onPlay={play} loading={loading}/>
+              {myList.length > 0 && <WorldRow title={`${profile?.name || 'Your'}'s list`} worlds={myList} onOpen={setSelected} onPlay={play}/>}
             </div>
+          </>
+        ) : null}
 
-            <p className="status-note">
-              Reader is live and the gallery is backed by Neon. Generated encounters download locally unless you save them into the library.
-            </p>
-          </div>
-
-          {status ? <p className="status-note">{status}</p> : null}
-        </div>
+        {view === 'list' && (
+          <LibraryView icon={<Heart size={24}/>} title="My List" empty="Add a world from the gallery to find it here." worlds={myList} onOpen={setSelected} onPlay={play}/>
+        )}
+        {view === 'history' && (
+          <LibraryView icon={<History size={24}/>} title="Continue Playing" empty="Worlds you start will appear here." worlds={recent} onOpen={setSelected} onPlay={play}/>
+        )}
       </main>
 
-      {showInfo && (
-        <div className="modal-overlay" onClick={() => setShowInfo(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Deployment Info</h2>
-              <button onClick={() => setShowInfo(false)} className="close-btn">x</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Generation Mode</label>
-                <p className="help-text">
-                  This deployment uses server-side generation with the org OpenAI key.
-                  No browser-stored API key is needed.
-                </p>
-              </div>
-              <div className="form-group">
-                <label>Reader</label>
-                <p className="help-text">
-                  The standalone reader is available at <a href="/reader">/reader</a>.
-                </p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowInfo(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+      {selected && (
+        <WorldModal world={selected} listed={profile?.list?.includes(String(selected.id))} onClose={() => setSelected(null)} onList={() => toggleList(selected)} onPlay={() => play(selected)}/>
       )}
-
-      {showPrompt && (
-        <div className="modal-overlay" onClick={() => setShowPrompt(false)}>
-          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>System Prompt Preview</h2>
-              <button onClick={() => setShowPrompt(false)} className="close-btn">x</button>
-            </div>
-            <div className="modal-body">
-              <pre className="prompt-preview">{generateSystemPrompt()}</pre>
-            </div>
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  navigator.clipboard.writeText(generateSystemPrompt());
-                  alert('Copied to clipboard!');
-                }}
-              >
-                Copy to Clipboard
-              </button>
-              <button className="btn btn-primary" onClick={() => setShowPrompt(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+      {profileOpen && (
+        <ProfileModal name={profileName} setName={setProfileName} onSubmit={saveProfile} onClose={profile ? () => setProfileOpen(false) : null}/>
       )}
     </div>
   );
 }
 
-function getEncounterData(storyworld) {
-  const encounter = storyworld?.encounter;
-  if (!encounter) {
-    return { text: '', choices: [], metadata: {} };
-  }
-
-  if (typeof encounter === 'string') {
-    try {
-      const parsed = JSON.parse(encounter);
-      return getEncounterData({ encounter: parsed });
-    } catch {
-      return { text: encounter, choices: [], metadata: {} };
-    }
-  }
-
-  return {
-    text: encounter.encounter || encounter.description || '',
-    choices: Array.isArray(encounter.choices) ? encounter.choices : [],
-    metadata: encounter.metadata || {}
-  };
+function WorldRow({ title, worlds, onOpen, onPlay, loading }) {
+  return <section className="world-section"><div className="section-heading"><h2>{title}</h2><span>{worlds.length} worlds</span></div><div className="world-grid">
+    {loading ? Array.from({ length: 4 }, (_, i) => <div className="world-card skeleton" key={i}/>) : null}
+    {!loading && worlds.length === 0 ? <p className="empty">No worlds match this view.</p> : worlds.map((world, index) => <WorldCard key={world.id} world={world} index={index} onOpen={onOpen} onPlay={onPlay}/>) }
+  </div></section>;
 }
 
-function formatDate(value) {
-  if (!value) {
-    return 'Unknown date';
-  }
+function WorldCard({ world, index, onOpen, onPlay }) {
+  return <article className={`world-card art-${index % 5}`}><button className="card-main" onClick={() => onOpen(world)}><span className="card-kicker">{world.genre}</span><h3>{world.title}</h3><p>{world.description}</p><span className="card-theme">{world.theme}</span></button><button className="card-play" onClick={() => onPlay(world)} title={`Play ${world.title}`}><Play size={18} fill="currentColor"/></button></article>;
+}
 
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? 'Unknown date'
-    : date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
+function LibraryView({ icon, title, empty, worlds, onOpen, onPlay }) {
+  return <div className="library-view"><a href="/" className="back"><ArrowLeft size={17}/>Morality Lab</a><div className="library-title">{icon}<h1>{title}</h1></div>{worlds.length ? <WorldRow title="Your worlds" worlds={worlds} onOpen={onOpen} onPlay={onPlay}/> : <p className="empty large">{empty}</p>}</div>;
+}
+
+function WorldModal({ world, listed, onClose, onList, onPlay }) {
+  const encounter = getEncounter(world);
+  return <div className="overlay" onMouseDown={onClose}><article className="world-modal" onMouseDown={e => e.stopPropagation()}><button className="icon-close" onClick={onClose} title="Close"><X/></button><div className="modal-art"><span>{world.genre}</span><h2>{world.title}</h2></div><div className="modal-body"><p>{world.description}</p><div className="hero-meta"><span>{world.size_category || 'Interactive'}</span><span>{world.theme}</span><span>{world.views || 0} plays</span></div><div className="hero-actions"><button className="primary" onClick={onPlay}><Play size={19} fill="currentColor"/>Start playing</button><button className="secondary" onClick={onList}>{listed ? <Check size={19}/> : <ListPlus size={19}/>}My List</button></div><div className="preview"><span className="eyebrow"><BookOpen size={14}/>Opening encounter</span><p>{encounter.text}</p>{encounter.choices.slice(0, 3).map(choice => <div className="choice-preview" key={choice}>{choice}<ChevronRight size={16}/></div>)}</div></div></article></div>;
+}
+
+function ProfileModal({ name, setName, onSubmit, onClose }) {
+  return <div className="overlay"><form className="profile-modal" onSubmit={onSubmit}>{onClose && <button type="button" className="icon-close" onClick={onClose} title="Close"><X/></button>}<div className="profile-icon"><Users size={30}/></div><span className="eyebrow">Local reader profile</span><h2>Who's exploring?</h2><p>Your list and play history stay in this browser.</p><label>Display name<input autoFocus maxLength="28" value={name} onChange={e => setName(e.target.value)} placeholder="Reader name"/></label><button className="primary" type="submit">Enter Storyworlds<ChevronRight size={18}/></button></form></div>;
+}
+
+function normalizeWorld(world) {
+  const metadata = typeof world.metadata === 'object' && world.metadata ? world.metadata : {};
+  return { ...world, id: String(world.id), genre: world.genre || metadata.genre || 'Moral dilemmas', theme: world.theme || metadata.theme || 'Interactive fiction' };
+}
+
+function getEncounter(world) {
+  let encounter = world?.encounter;
+  if (typeof encounter === 'string') {
+    try { encounter = JSON.parse(encounter); } catch { return { text: encounter, choices: [] }; }
+  }
+  return { text: encounter?.encounter || encounter?.description || world.description, choices: Array.isArray(encounter?.choices) ? encounter.choices : [] };
 }
 
 export default App;
