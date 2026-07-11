@@ -184,7 +184,13 @@ function ProfileModal({ name, setName, onSubmit, onClose }) {
 
 function normalizeWorld(world) {
   const metadata = typeof world.metadata === 'object' && world.metadata ? world.metadata : {};
-  return { ...world, id: String(world.id), genre: world.genre || metadata.genre || 'Moral dilemmas', theme: world.theme || metadata.theme || 'Interactive fiction' };
+  return {
+    ...world,
+    id: String(world.id),
+    localPath: world.localPath || (world.source_path ? `/api/storyworlds/${encodeURIComponent(world.id)}` : undefined),
+    genre: world.genre || metadata.genre || 'Moral dilemmas',
+    theme: world.theme || metadata.theme || 'Interactive fiction'
+  };
 }
 
 function getEncounter(world) {

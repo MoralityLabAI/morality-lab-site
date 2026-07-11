@@ -34,6 +34,11 @@ CREATE TABLE IF NOT EXISTS storyworlds (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Corpus imports use the source path as an idempotency key. Existing databases
+-- can run this migration without dropping any authored worlds.
+ALTER TABLE storyworlds ADD COLUMN IF NOT EXISTS source_path TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_storyworlds_source_path ON storyworlds(source_path) WHERE source_path IS NOT NULL;
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_storyworlds_public 
   ON storyworlds(is_public) 

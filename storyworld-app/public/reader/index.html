@@ -936,7 +936,8 @@
       try {
         const response = await fetch(worldUrl);
         if (!response.ok) throw new Error(`Request failed (${response.status})`);
-        startGame(await response.json());
+        const payload = await response.json();
+        startGame(payload.storyworld || payload);
       } catch (err) {
         alert('Failed to load storyworld: ' + err.message);
         elements.loadingScreen.classList.add('hidden');

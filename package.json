@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm --prefix storyworld-app ci && npm --prefix storyworld-app run build && node scripts/build-site.mjs"
+    "build": "npm --prefix storyworld-app ci && npm --prefix storyworld-app run build && node scripts/build-site.mjs",
+    "import:storyworlds": "node scripts/import-storyworlds.mjs"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0"

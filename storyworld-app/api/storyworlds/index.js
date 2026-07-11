@@ -118,7 +118,8 @@ async function listStoryworlds(req, res) {
         likes,
         fork_count,
         model_used,
-        created_at
+        created_at,
+        source_path
       FROM storyworlds
       WHERE is_public = true
       ORDER BY ${sortField} ${order}
