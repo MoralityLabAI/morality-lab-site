@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { sql } from '../../db.js';
 import { hasPostgresConfig, methodNotAllowed, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {

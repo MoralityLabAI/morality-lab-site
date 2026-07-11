@@ -7,6 +7,6 @@
     "import:storyworlds": "node scripts/import-storyworlds.mjs"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0"
+    "pg": "^8.13.1"
   }
 }

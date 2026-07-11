@@ -8,7 +8,8 @@ const dryRun = process.argv.includes('--dry-run');
 const limitArg = process.argv.find(value => value.startsWith('--limit='));
 const limit = limitArg ? Number.parseInt(limitArg.slice(8), 10) : Infinity;
 const excluded = /(^|[\\/])(generated|benchmarks|runs|archive|vendor|node_modules)([\\/]|$)/i;
-const { sql } = dryRun ? { sql: null } : await import('@vercel/postgres');
+const database = dryRun ? { sql: null, closeDb: async () => {} } : await import('../storyworld-app/api/db.js');
+const { sql, closeDb } = database;
 
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -95,3 +96,4 @@ for (const file of files) {
 }
 
 console.log(`${dryRun ? 'Would import' : 'Imported'} ${imported} worlds; skipped ${skipped}; source ${root}`);
+await closeDb();
