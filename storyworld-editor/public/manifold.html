@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SweepWeave Manifold</title>
+    <style>
+      :root {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #e6e6e6;
+        background-color: #0b0f1c;
+      }
+      body {
+        margin: 0;
+        background: #0b0f1c;
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #141a2b;
+        border-bottom: 1px solid #2e3853;
+      }
+      .toolbar label {
+        font-size: 12px;
+        color: #b6c1e8;
+      }
+      .toolbar select,
+      .toolbar button {
+        background: #1c2236;
+        color: #e6e6e6;
+        border: 1px solid #3d4767;
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      .status {
+        font-size: 12px;
+        color: #b1bad8;
+      }
+      .canvas-wrap {
+        position: relative;
+        flex: 1;
+        min-height: 520px;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .hint {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(12, 16, 28, 0.7);
+        border: 1px solid rgba(125, 140, 200, 0.3);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 4px 8px;
+        background: rgba(8, 10, 18, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        white-space: nowrap;
+        display: none;
+      }
+      .hud {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        width: 260px;
+        background: rgba(10, 14, 24, 0.8);
+        border: 1px solid rgba(120, 140, 200, 0.4);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        color: #d5dbf0;
+      }
+      .hud h4 {
+        margin: 0 0 6px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #f0f4ff;
+      }
+      .hud-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .hud-bar {
+        height: 6px;
+        background: #22304d;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+      .hud-bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #6a86ff, #9bb4ff);
+      }
+      .hud-bar.ending span {
+        background: linear-gradient(90deg, #ffc86b, #ffecae);
+      }
+      .hud-list {
+        display: grid;
+        gap: 6px;
+      }
+      .hud-label {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .sim-controls {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="toolbar">
+        <label for="xAxis">X</label>
+        <select id="xAxis"></select>
+        <label for="yAxis">Y</label>
+        <select id="yAxis"></select>
+        <label for="zAxis">Z</label>
+        <select id="zAxis"></select>
+        <div class="sim-controls">
+          <button id="simToggle">Play</button>
+          <button id="simStep">Step</button>
+          <label for="simSpeed">Speed</label>
+          <select id="simSpeed">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+            <option value="8">8x</option>
+          </select>
+        </div>
+        <button id="loadButton">Load JSON</button>
+        <div class="status" id="status">Waiting for storyworld...</div>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="hint">Drag to rotate. Scroll to zoom.</div>
+        <div class="tooltip" id="tooltip"></div>
+        <div class="hud" id="hud">
+          <h4>Monte Carlo</h4>
+          <div class="hud-row" id="simStatus">Idle</div>
+          <div class="hud-list" id="histogram"></div>
+        </div>
+      </div>
+    </div>
+
+    <input id="fileInput" type="file" accept=".json,.js" style="display:none" />
+
+    <script type="module">
+      import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+      import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+      const statusEl = document.getElementById("status");
+      const canvasWrap = document.getElementById("canvasWrap");
+      const tooltip = document.getElementById("tooltip");
+      const fileInput = document.getElementById("fileInput");
+      const loadButton = document.getElementById("loadButton");
+      const xAxisSelect = document.getElementById("xAxis");
+      const yAxisSelect = document.getElementById("yAxis");
+      const zAxisSelect = document.getElementById("zAxis");
+      const simToggle = document.getElementById("simToggle");
+      const simStep = document.getElementById("simStep");
+      const simSpeed = document.getElementById("simSpeed");
+      const simStatus = document.getElementById("simStatus");
+      const histogram = document.getElementById("histogram");
+
+      let storyworld = null;
+      let axisOptions = [];
+      let axisState = { x: null, y: null, z: null };
+      let encounterWeights = [];
+      let axisWeightRanges = new Map();
+      let simRunning = false;
+      let simTicks = 0;
+      let simSpeedValue = 1;
+      let visitCounts = new Map();
+
+      const axisLabel = (axis) => {
+        if (!axis) return "Property";
+        const prop = storyworld?.authored_properties?.find((p) => p.id === axis.propId);
+        return prop?.property_name || axis.propId || "Property";
+      };
+
+      const axisValue = (axis, encounterIndex) => {
+        const encounters = storyworld?.encounters || [];
+        const encounter = encounters[encounterIndex];
+        if (!encounter) return 0;
+        if (!axis) return 0;
+        const character = storyworld?.characters?.[0];
+        if (!character) return 0;
+        const map = character.bnumber_properties || character.bnumber_property_values;
+        if (map && typeof map === "object") {
+          if (axis.propId && axis.propId in map) return map[axis.propId];
+        }
+        return 0;
+      };
+
+      const parseAxisValue = (value) => {
+        if (value.startsWith("prop:")) return { propId: value.slice(5) };
+        return value;
+      };
+
+      const clamp01 = (value) => Math.max(0, Math.min(1, value));
+
+      const evaluateBool = (node) => {
+        if (!node || typeof node !== "object") return false;
+        if (node.type === "Constant") return Boolean(node.value);
+        if (node.type === "SpoolActive") {
+          const spool = storyworld?.spools?.find((s) => s.id === node.spoolId || s.spool_id === node.spoolId);
+          return Boolean(spool?.active_at_start);
+        }
+        return false;
+      };
+
+      const evaluateScript = (node) => {
+        if (!node || typeof node !== "object") return 0;
+        switch (node.type) {
+          case "Constant":
+            return clamp01(Number(node.value || 0));
+          case "BNumberProperty": {
+            const actor = storyworld?.characters?.find((c) => c.id === node.characterId) || storyworld?.characters?.[0];
+            const property = storyworld?.authored_properties?.find((p) => p.id === node.propertyId);
+            const map = actor?.bnumber_properties || actor?.bnumber_property_values || {};
+            const value = map?.[node.propertyId] ?? property?.default_value ?? 0;
+            return clamp01(value);
+          }
+          case "ArithmeticNegation":
+            return clamp01(1 - evaluateScript(node.child));
+          case "Proximity": {
+            const left = evaluateScript(node.left);
+            const right = evaluateScript(node.right);
+            return clamp01(1 - Math.abs(left - right));
+          }
+          case "Average": {
+            const left = evaluateScript(node.left);
+            const right = evaluateScript(node.right);
+            return clamp01((left + right) / 2);
+          }
+          case "Blend": {
+            const left = evaluateScript(node.left);
+            const right = evaluateScript(node.right);
+            const weight = clamp01(evaluateScript(node.weight));
+            return clamp01(left * (1 - weight) + right * weight);
+          }
+          case "Maximum":
+            return clamp01(Math.max(evaluateScript(node.left), evaluateScript(node.right)));
+          case "Minimum":
+            return clamp01(Math.min(evaluateScript(node.left), evaluateScript(node.right)));
+          case "Nudge": {
+            const base = evaluateScript(node.base);
+            const nudge = evaluateScript(node.nudge);
+            return clamp01(base * (1 - nudge) + nudge);
+          }
+          case "IfThen":
+            return evaluateBool(node.condition) ? evaluateScript(node.thenNode) : evaluateScript(node.elseNode);
+          default:
+            return 0;
+        }
+      };
+
+      const collectScriptWeights = (node, weights, weight = 1) => {
+        if (!node || typeof node !== "object") return;
+        switch (node.type) {
+          case "BNumberProperty":
+            if (node.propertyId) {
+              weights[node.propertyId] = (weights[node.propertyId] || 0) + weight;
+            }
+            return;
+          case "ArithmeticNegation":
+            return collectScriptWeights(node.child, weights, weight);
+          case "Proximity":
+          case "Average":
+          case "Maximum":
+          case "Minimum":
+            collectScriptWeights(node.left, weights, weight * 0.5);
+            collectScriptWeights(node.right, weights, weight * 0.5);
+            return;
+          case "Blend":
+            collectScriptWeights(node.left, weights, weight * 0.45);
+            collectScriptWeights(node.right, weights, weight * 0.45);
+            collectScriptWeights(node.weight, weights, weight * 0.1);
+            return;
+          case "Nudge":
+            collectScriptWeights(node.base, weights, weight * 0.7);
+            collectScriptWeights(node.nudge, weights, weight * 0.3);
+            return;
+          case "IfThen":
+            collectScriptWeights(node.thenNode, weights, weight * 0.5);
+            collectScriptWeights(node.elseNode, weights, weight * 0.5);
+            return;
+          default:
+            return;
+        }
+      };
+
+      const rebuildEncounterWeights = () => {
+        encounterWeights = [];
+        axisWeightRanges = new Map();
+        const encounters = storyworld?.encounters || [];
+        encounters.forEach((encounter, index) => {
+          const weights = {};
+          if (encounter?.desirability_ast) {
+            collectScriptWeights(encounter.desirability_ast, weights, 1);
+          }
+          if (encounter?.availability_ast) {
+            collectScriptWeights(encounter.availability_ast, weights, 0.5);
+          }
+          encounterWeights[index] = weights;
+          Object.entries(weights).forEach(([propId, value]) => {
+            const current = axisWeightRanges.get(propId) || { min: Infinity, max: -Infinity };
+            current.min = Math.min(current.min, value);
+            current.max = Math.max(current.max, value);
+            axisWeightRanges.set(propId, current);
+          });
+        });
+      };
+
+      const rebuildAxisOptions = () => {
+        const props = [...(storyworld?.authored_properties || [])].sort((a, b) => {
+          const depthDelta = (a.depth ?? 0) - (b.depth ?? 0);
+          if (depthDelta !== 0) return depthDelta;
+          const indexDelta = (a.creation_index ?? 0) - (b.creation_index ?? 0);
+          if (indexDelta !== 0) return indexDelta;
+          return String(a.property_name || "").localeCompare(String(b.property_name || ""));
+        });
+        axisOptions = props.map((prop) => ({ propId: prop.id }));
+        const buildSelect = (selectEl, selected) => {
+          selectEl.innerHTML = "";
+          axisOptions.forEach((axis) => {
+            const value = typeof axis === "string" ? axis : `prop:${axis.propId}`;
+            const opt = document.createElement("option");
+            opt.value = value;
+            opt.textContent = axisLabel(axis);
+            selectEl.appendChild(opt);
+          });
+          if (selected) {
+            selectEl.value = typeof selected === "string" ? selected : `prop:${selected.propId}`;
+          }
+        };
+        if (axisOptions.length > 0) {
+          axisState.x = axisOptions[0];
+          axisState.y = axisOptions[1] || axisOptions[0];
+          axisState.z = axisOptions[2] || axisOptions[0];
+          buildSelect(xAxisSelect, axisState.x);
+          buildSelect(yAxisSelect, axisState.y);
+          buildSelect(zAxisSelect, axisState.z);
+          xAxisSelect.disabled = false;
+          yAxisSelect.disabled = false;
+          zAxisSelect.disabled = false;
+        } else {
+          axisState = { x: null, y: null, z: null };
+          xAxisSelect.disabled = true;
+          yAxisSelect.disabled = true;
+          zAxisSelect.disabled = true;
+          statusEl.textContent = "No authored properties to display.";
+        }
+      };
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      canvasWrap.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x05060a, 0.03);
+
+      const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
+      camera.position.set(0, 12, 20);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.AmbientLight(0x9aa7ff, 0.3));
+      const key = new THREE.DirectionalLight(0xffffff, 0.9);
+      key.position.set(8, 12, 6);
+      scene.add(key);
+
+      const axes = new THREE.AxesHelper(8);
+      axes.material.opacity = 0.6;
+      axes.material.transparent = true;
+      scene.add(axes);
+
+      const pointsGroup = new THREE.Group();
+      const endingsGroup = new THREE.Group();
+      const edgesGroup = new THREE.Group();
+      const effectNodesGroup = new THREE.Group();
+      scene.add(pointsGroup);
+      scene.add(endingsGroup);
+      scene.add(edgesGroup);
+      scene.add(effectNodesGroup);
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      const buildPoints = () => {
+        pointsGroup.clear();
+        endingsGroup.clear();
+        edgesGroup.clear();
+        effectNodesGroup.clear();
+        if (!storyworld) return;
+        if (!axisState.x || !axisState.y || !axisState.z) return;
+        const encounters = storyworld.encounters || [];
+        const spools = storyworld.spools || [];
+        const spoolIndex = new Map(spools.map((spool, index) => [spool.id || spool.spool_id, index]));
+        const values = encounters.map((encounter, index) => ({
+          index,
+          x: axisValue(axisState.x, index),
+          y: axisValue(axisState.y, index),
+          z: axisValue(axisState.z, index),
+          encounter,
+        }));
+        const max = values.reduce(
+          (acc, v) => ({
+            x: Math.max(acc.x, Math.abs(v.x)),
+            y: Math.max(acc.y, Math.abs(v.y)),
+            z: Math.max(acc.z, Math.abs(v.z)),
+          }),
+          { x: 1, y: 1, z: 1 }
+        );
+        const scale = 6;
+        const positions = new Map();
+        values.forEach((v) => {
+          const connected = v.encounter.connected_spools || v.encounter.connected_spool_ids || [];
+          const firstSpoolId = connected[0];
+          const spoolOffsetIndex = spoolIndex.get(firstSpoolId) ?? 0;
+          const spoolOffset = (spoolOffsetIndex - spools.length / 2) * 0.4;
+          const prereqCount = (v.encounter.prerequisites || []).length;
+          const prereqOffset = prereqCount * 0.25;
+          const weights = encounterWeights[v.index] || {};
+          const weightForAxis = (axisKey) => {
+            if (!axisKey || typeof axisKey === "string") return 0;
+            const value = weights[axisKey.propId] || 0;
+            const range = axisWeightRanges.get(axisKey.propId);
+            if (!range || !isFinite(range.max - range.min) || range.max === range.min) return 0;
+            return (value - range.min) / (range.max - range.min);
+          };
+          const xBias = weightForAxis(axisState.x) * 0.8;
+          const yBias = weightForAxis(axisState.y) * 0.8;
+          const zBias = weightForAxis(axisState.z) * 0.8;
+          const isEnding = (v.encounter.options || []).length === 0;
+          const geometry = new THREE.SphereGeometry(isEnding ? 0.2 : 0.12, 18, 18);
+          const material = new THREE.MeshStandardMaterial({
+            color: isEnding ? 0xffc86b : 0xe8ecff,
+            emissive: isEnding ? 0xffc86b : 0x6a86ff,
+            emissiveIntensity: isEnding ? 1.2 : 0.5,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          const position = new THREE.Vector3(
+            (v.x / max.x) * scale + spoolOffset + xBias,
+            (v.y / max.y) * scale + prereqOffset + yBias,
+            (v.z / max.z) * scale + zBias
+          );
+          mesh.position.copy(position);
+          mesh.userData = { encounter: v.encounter };
+          if (isEnding) endingsGroup.add(mesh);
+          else pointsGroup.add(mesh);
+          if (v.encounter?.id) {
+            positions.set(v.encounter.id, { position, isEnding });
+          }
+        });
+
+        const addEdge = (fromId, toId) => {
+          const from = positions.get(fromId);
+          const to = positions.get(toId);
+          if (!from || !to) return;
+          const geometry = new THREE.BufferGeometry().setFromPoints([from.position, to.position]);
+          const color = to.isEnding ? 0xffc17a : 0x6a86ff;
+          const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
+          const line = new THREE.Line(geometry, material);
+          edgesGroup.add(line);
+
+          const mid = from.position.clone().lerp(to.position, 0.6);
+          const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05, 10, 10),
+            new THREE.MeshStandardMaterial({
+              color: to.isEnding ? 0xffc17a : 0x6a86ff,
+              emissive: to.isEnding ? 0xffb347 : 0x3f59c9,
+              emissiveIntensity: 0.7,
+            })
+          );
+          marker.position.copy(mid);
+          effectNodesGroup.add(marker);
+        };
+
+        encounters.forEach((encounter) => {
+          const fromId = encounter.id;
+          (encounter.options || []).forEach((option) => {
+            (option.reactions || []).forEach((reaction) => {
+              (reaction.effects || []).forEach((effect) => {
+                if (!effect) return;
+                if (effect.type === "NextPage" && effect.encounterId) {
+                  addEdge(fromId, effect.encounterId);
+                }
+                if ((effect.type === "DisplayEncounter" || effect.type === "DisplaySpecificEncounter") && effect.encounterId) {
+                  addEdge(fromId, effect.encounterId);
+                }
+                if (effect.type === "NextPage" && effect.encounter_id) {
+                  addEdge(fromId, effect.encounter_id);
+                }
+              });
+            });
+          });
+        });
+      };
+
+      const resize = () => {
+        const rect = canvasWrap.getBoundingClientRect();
+        renderer.setSize(rect.width, rect.height);
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+      };
+      const ro = new ResizeObserver(resize);
+      ro.observe(canvasWrap);
+      resize();
+
+      let t = 0;
+      const animate = () => {
+        t += 0.01;
+        endingsGroup.children.forEach((child, index) => {
+          child.material.emissiveIntensity = 0.7 + Math.sin(t + index) * 0.3;
+        });
+        controls.update();
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      };
+      animate();
+
+      renderer.domElement.addEventListener("mousemove", (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects([...pointsGroup.children, ...endingsGroup.children], false);
+        if (hits.length) {
+          const encounter = hits[0].object.userData.encounter;
+          const label = encounter?.title || encounter?.id || "Encounter";
+          tooltip.textContent = label;
+          tooltip.style.display = "block";
+          tooltip.style.left = `${event.clientX - rect.left + 12}px`;
+          tooltip.style.top = `${event.clientY - rect.top + 12}px`;
+        } else {
+          tooltip.style.display = "none";
+        }
+      });
+
+      renderer.domElement.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+
+      renderer.domElement.addEventListener("dblclick", (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects([...pointsGroup.children, ...endingsGroup.children], false);
+        if (hits.length) {
+          const encounter = hits[0].object.userData.encounter;
+          if (encounter?.id && window.opener) {
+            window.opener.postMessage({ type: "manifold:selectEncounter", id: encounter.id }, "*");
+          }
+        }
+      });
+
+      xAxisSelect.addEventListener("change", () => {
+        axisState.x = parseAxisValue(xAxisSelect.value);
+        buildPoints();
+      });
+      yAxisSelect.addEventListener("change", () => {
+        axisState.y = parseAxisValue(yAxisSelect.value);
+        buildPoints();
+      });
+      zAxisSelect.addEventListener("change", () => {
+        axisState.z = parseAxisValue(zAxisSelect.value);
+        buildPoints();
+      });
+
+      loadButton.addEventListener("click", () => {
+        if (window.opener) {
+          window.opener.postMessage({ type: "manifold:requestStoryworld" }, "*");
+          statusEl.textContent = "Requesting storyworld from editor...";
+          return;
+        }
+        fileInput.value = "";
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        const text = await file.text();
+        const data = parseStoryworld(text);
+        if (data) setStoryworld(data);
+      });
+
+      const parseStoryworld = (text) => {
+        try {
+          if (text.includes("var storyworld_data")) {
+            const match = text.match(/var storyworld_data\\s*=\\s*(\\{[\\s\\S]*\\});?/);
+            if (match) return JSON.parse(match[1]);
+          }
+          return JSON.parse(text);
+        } catch (err) {
+          statusEl.textContent = "Failed to parse storyworld JSON.";
+          return null;
+        }
+      };
+
+      const setStoryworld = (data, versionOverride) => {
+        storyworld = data;
+        const version = versionOverride || data?.sweepweave_version || "unknown";
+        statusEl.textContent = `Loaded: ${storyworld.storyworld_title || "Untitled"} (${storyworld.encounters?.length || 0} encounters) [${version}]`;
+        rebuildAxisOptions();
+        rebuildEncounterWeights();
+        buildPoints();
+        resetSimulation();
+      };
+
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "storyworld:update") return;
+        setStoryworld(event.data.data, event.data.version);
+      });
+
+      const resetSimulation = () => {
+        simTicks = 0;
+        visitCounts = new Map();
+        simStatus.textContent = "Idle";
+        histogram.innerHTML = "";
+      };
+
+      const pickWeighted = (items) => {
+        if (!items.length) return null;
+        const total = items.reduce((sum, item) => sum + item.weight, 0);
+        if (total <= 0) return items[Math.floor(Math.random() * items.length)];
+        let r = Math.random() * total;
+        for (const item of items) {
+          r -= item.weight;
+          if (r <= 0) return item;
+        }
+        return items[items.length - 1];
+      };
+
+      const runSimulationStep = () => {
+        if (!storyworld) return;
+        const encounters = storyworld.encounters || [];
+        const available = encounters.filter((encounter) => {
+          if (!encounter) return false;
+          if (!encounter.availability_ast) return true;
+          return evaluateBool(encounter.availability_ast);
+        });
+        if (!available.length) return;
+        const encounterScores = available.map((encounter) => ({
+          encounter,
+          weight: encounter.desirability_ast ? evaluateScript(encounter.desirability_ast) : 0.5,
+        }));
+        const encounterChoice = pickWeighted(encounterScores)?.encounter || available[0];
+        const options = encounterChoice.options || [];
+        if (!options.length) return;
+        const option = options[Math.floor(Math.random() * options.length)];
+        const reactions = (option.reactions || []).map((reaction) => ({
+          reaction,
+          weight: reaction.desirability_ast
+            ? evaluateScript(reaction.desirability_ast)
+            : reaction.inclination_ast
+              ? evaluateScript(reaction.inclination_ast)
+              : 0.5,
+        }));
+        const reactionChoice = pickWeighted(reactions)?.reaction || option.reactions?.[0];
+        if (!reactionChoice) return;
+
+        simTicks += 1;
+        const encounterId = encounterChoice.id || encounterChoice.title || `encounter-${simTicks}`;
+        visitCounts.set(encounterId, (visitCounts.get(encounterId) || 0) + 1);
+
+        updateHistogram();
+      };
+
+      const updateHistogram = () => {
+        const entries = Array.from(visitCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6);
+        const max = entries.length ? entries[0][1] : 1;
+        histogram.innerHTML = "";
+        entries.forEach(([label, count]) => {
+          const row = document.createElement("div");
+          row.className = "hud-label";
+          row.innerHTML = `<span>${label}</span><span>${count}</span>`;
+          const bar = document.createElement("div");
+          bar.className = "hud-bar";
+          const fill = document.createElement("span");
+          fill.style.width = `${(count / max) * 100}%`;
+          bar.appendChild(fill);
+          histogram.appendChild(row);
+          histogram.appendChild(bar);
+        });
+        simStatus.textContent = `Ticks: ${simTicks}`;
+      };
+
+      const tickSimulation = () => {
+        if (!simRunning) return;
+        for (let i = 0; i < simSpeedValue; i += 1) {
+          runSimulationStep();
+        }
+        requestAnimationFrame(tickSimulation);
+      };
+
+      simToggle.addEventListener("click", () => {
+        simRunning = !simRunning;
+        simToggle.textContent = simRunning ? "Pause" : "Play";
+        if (simRunning) {
+          tickSimulation();
+        }
+      });
+
+      simStep.addEventListener("click", () => {
+        runSimulationStep();
+      });
+
+      simSpeed.addEventListener("change", () => {
+        simSpeedValue = Number(simSpeed.value || 1);
+      });
+
+      if (window.opener) {
+        window.opener.postMessage({ type: "manifold:ready" }, "*");
+      }
+    </script>
+  </body>
+</html>

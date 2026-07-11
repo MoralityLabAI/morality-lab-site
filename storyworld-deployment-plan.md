@@ -6,6 +6,7 @@ The Morality Lab site and Storyworld product deploy as one Vercel project from t
 
 - `/`: static Morality Lab research site
 - `/storyworld`: React catalog and profile experience
+- `/editor`: hosted Sweepweave Storyworld Editor
 - `/storyworld/reader`: Sweepweave reader
 - `/api/storyworlds`: public catalog API
 - `/api/storyworlds/:id`: full playable world API

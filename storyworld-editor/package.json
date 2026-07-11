@@ -1,0 +1,16 @@
+{
+  "name": "morality-lab-storyworld-editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "morality-lab-site": "file:..",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}

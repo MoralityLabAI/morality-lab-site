@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyworld Reader</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 300px; margin-bottom: 10px; }
+        button { padding: 10px 15px; }
+        #output { margin-top: 20px; border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+    </style>
+</head>
+<body>
+    <h1>Storyworld Reader</h1>
+    <textarea id="storyworldInput" placeholder="Paste your storyworld JSON here..."></textarea>
+    <button id="loadStoryworld">Load Storyworld</button>
+    <div id="output"></div>
+
+    <script type="module">
+        import { StoryworldIO } from './StoryworldIO.ts';
+        import { Storyworld } from './Storyworld.ts';
+
+        const storyworldInput = document.getElementById('storyworldInput');
+        const loadStoryworldBtn = document.getElementById('loadStoryworld');
+        const outputDiv = document.getElementById('output');
+
+        loadStoryworldBtn.addEventListener('click', () => {
+            const jsonContent = storyworldInput.value;
+            if (!jsonContent) {
+                outputDiv.textContent = 'Please paste storyworld JSON into the textarea.';
+                return;
+            }
+
+            const storyworld = new Storyworld();
+            try {
+                const success = StoryworldIO.load_into_storyworld(storyworld, jsonContent);
+
+                if (success) {
+                    outputDiv.textContent = `Storyworld "${storyworld.storyworld_title}" by ${storyworld.storyworld_author} loaded successfully!`;
+                    // You can add more detailed output here if needed
+                    console.log('Loaded Storyworld:', storyworld);
+                } else {
+                    outputDiv.textContent = 'Failed to load storyworld. Check console for errors.';
+                }
+            } catch (e) {
+                outputDiv.textContent = `An error occurred: ${e.message}`;
+                console.error('Loading error:', e);
+            }
+        });
+    </script>
+</body>
+</html>
