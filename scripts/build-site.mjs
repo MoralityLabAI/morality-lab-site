@@ -11,3 +11,4 @@ for (const asset of rootAssets) {
 
 await cp('storyworld-app/dist', 'dist/storyworld', { recursive: true });
 await cp('storyworld-editor/dist', 'dist/editor', { recursive: true });
+await cp('strategy-game/dist', 'dist/strategy', { recursive: true });

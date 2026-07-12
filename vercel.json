@@ -11,6 +11,10 @@
     {
       "source": "/editor",
       "destination": "/editor/index.html"
+    },
+    {
+      "source": "/strategy",
+      "destination": "/strategy/index.html"
     }
   ],
   "headers": [

@@ -4,6 +4,8 @@ node_modules/
 storyworld-app/node_modules/
 storyworld-editor/node_modules/
 storyworld-editor/dist/
+strategy-game/node_modules/
+strategy-game/dist/
 dist/
 
 .vercel

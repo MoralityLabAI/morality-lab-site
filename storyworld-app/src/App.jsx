@@ -6,7 +6,7 @@ import {
 import './App.css';
 
 const STORAGE_KEY = 'moralitylab.storyworld.profile.v1';
-const FILTERS = ['Featured', 'Historical', 'Diplomacy', 'Moral dilemmas', 'All worlds'];
+const FILTERS = ['Featured', 'Strategy', 'Historical', 'Diplomacy', 'Moral dilemmas', 'All worlds'];
 const FALLBACK_WORLDS = [
   {
     id: 'mihna', title: 'The Mihna', genre: 'Historical', theme: 'Constitutional alignment',
@@ -132,6 +132,14 @@ function App() {
               <div className="filter-row" role="tablist" aria-label="Catalog filters">
                 {FILTERS.map(filter => <button key={filter} className={activeFilter === filter ? 'active' : ''} onClick={() => setActiveFilter(filter)}>{filter}</button>)}
               </div>
+              <section className="strategy-banner">
+                <div>
+                  <span className="eyebrow"><Sparkles size={14}/>Strategy</span>
+                  <h2>They Sing</h2>
+                  <p>An AI-native strategy game about memetics, diplomacy, technology, and the next world order.</p>
+                </div>
+                <a className="primary" href="/strategy"><Play size={18} fill="currentColor"/>Play They Sing</a>
+              </section>
               {notice && <p className="notice">{notice}</p>}
               {recent.length > 0 && <WorldRow title="Continue playing" worlds={recent} onOpen={setSelected} onPlay={play} />}
               <WorldRow title={activeFilter === 'Featured' ? 'Featured worlds' : activeFilter} worlds={visibleWorlds} onOpen={setSelected} onPlay={play} loading={loading}/>

@@ -33,6 +33,10 @@ button { color:inherit; }
 .filter-row button { flex:none; border:1px solid var(--line); background:#141619; padding:9px 14px; cursor:pointer; color:var(--muted); }
 .filter-row button.active { color:var(--ink); background:#31201f; border-color:#75413a; }
 .notice { border-left:3px solid var(--gold); color:var(--muted); padding:8px 12px; }
+.strategy-banner { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:10px 0 38px; padding:25px 28px; border:1px solid #285260; background:linear-gradient(110deg,#10252c,#14181d 70%); }
+.strategy-banner h2 { margin:7px 0 5px; font:700 32px Georgia,serif; }
+.strategy-banner p { max-width:650px; margin:0; color:#bac8cb; line-height:1.5; }
+.strategy-banner a { flex:none; text-decoration:none; }
 .world-section { margin:24px 0 42px; }
 .section-heading { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; }
 .section-heading h2 { margin:0; font:700 24px Georgia,serif; }

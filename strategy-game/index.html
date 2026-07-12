@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>They Sing | Morality Lab Strategy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #020308;
+      color: #eee;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    canvas { display: block; }
+    .loading-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #020308;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loading-title {
+      font-family: 'Orbitron', system-ui, sans-serif;
+      font-size: 28px;
+      letter-spacing: 8px;
+      color: #00d4ff;
+      margin-bottom: 30px;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+    .loading-bar {
+      width: 200px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .loading-progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00d4ff, #ff44aa);
+      animation: loading 1.5s ease-in-out infinite;
+    }
+    @keyframes loading {
+      0% { width: 0%; margin-left: 0%; }
+      50% { width: 60%; margin-left: 20%; }
+      100% { width: 0%; margin-left: 100%; }
+    }
+    .loading-subtitle {
+      margin-top: 20px;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: #667;
+      text-transform: uppercase;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="loading-screen" id="loading">
+    <div class="loading-title">ASI CARTEL</div>
+    <div class="loading-bar"><div class="loading-progress"></div></div>
+    <div class="loading-subtitle">Initializing Global Network</div>
+  </div>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
