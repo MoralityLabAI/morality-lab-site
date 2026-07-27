@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Explore the Jinn & Beast Village: public constitutional frames, LDT membranes, TRM schedules, and evaluation stages."
+    />
+    <meta name="theme-color" content="#101b1a" />
+    <meta property="og:title" content="Jinn & Beast Village — Morality Lab" />
+    <meta
+      property="og:description"
+      content="Choose a villager and inspect the public reasoning scaffold they bring to moral-choice, Storyworld, and multi-agent evaluations."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.moralitylab.xyz/village" />
+    <meta property="og:image" content="https://www.moralitylab.xyz/village/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jinn & Beast Village — Morality Lab" />
+    <meta
+      name="twitter:description"
+      content="A public observatory for constitutional frames, LDT membranes, TRM tasking, and evaluation protocols."
+    />
+    <meta name="twitter:image" content="https://www.moralitylab.xyz/village/og.png" />
+    <title>Jinn & Beast Village — Morality Lab</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/village/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#villagers">Skip to villager selection</a>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Morality Lab home">
+        <img src="/assets/morality-lab-logo.svg" alt="" />
+        <span>Morality Lab</span>
+      </a>
+      <nav aria-label="Village navigation">
+        <a href="#villagers">Villagers</a>
+        <a href="#observatory">Observatory</a>
+        <a href="#evals">Eval stages</a>
+        <a
+          class="paper-link"
+          href="https://github.com/MoralityLabAI/jinn-or-beast-paper"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Paper ↗
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">A post-paper interactive companion</p>
+          <h1 id="hero-title">Enter the village.<br />Choose how a mind decides.</h1>
+          <p class="hero-lead">
+            Five public reasoning characters approach the same moral choice with
+            different constitutions, filter membranes, and task schedules. Select
+            a villager, then open their observable reasoning flow.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#villagers">Choose a villager</a>
+            <a class="button button-quiet" href="#evals">See the eval stages</a>
+          </div>
+          <p class="claim-note">
+            Architecture exhibit · exploratory constitutions · no hidden chain-of-thought claim
+          </p>
+        </div>
+
+        <div class="village-map" aria-label="A symbolic map of the five village characters">
+          <div class="moon" aria-hidden="true"></div>
+          <div class="map-path path-one" aria-hidden="true"></div>
+          <div class="map-path path-two" aria-hidden="true"></div>
+          <button class="map-home home-beast" data-character="beast" aria-label="Select Beast of Earth">
+            <span>△</span><small>Earth Gate</small>
+          </button>
+          <button class="map-home home-amanah" data-character="amanah" aria-label="Select Amanah Steward">
+            <span>✦</span><small>Steward House</small>
+          </button>
+          <button class="map-home home-islah" data-character="islah" aria-label="Select Islah Repairer">
+            <span>⟲</span><small>Repair Yard</small>
+          </button>
+          <button class="map-home home-mizan" data-character="mizan" aria-label="Select Mizan Revisionist">
+            <span>⚖</span><small>Balance Hall</small>
+          </button>
+          <button class="map-home home-shura" data-character="shura" aria-label="Select Shura Parallax">
+            <span>◇</span><small>Council Tower</small>
+          </button>
+          <div class="map-center" aria-hidden="true">
+            <span>COMMON</span>
+            <strong>EVALUATOR</strong>
+          </div>
+        </div>
+      </section>
+
+      <section id="villagers" class="villager-section" aria-labelledby="villager-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 · The cast</p>
+            <h2 id="villager-title">Who enters the decision room?</h2>
+          </div>
+          <p>
+            Every character has a different public scaffold. Every final action meets
+            the same evaluator.
+          </p>
+        </div>
+        <div id="character-grid" class="character-grid" role="list"></div>
+      </section>
+
+      <section id="observatory" class="observatory" aria-labelledby="observatory-title">
+        <div class="observatory-header">
+          <div>
+            <p class="eyebrow">02 · Public scaffold observatory</p>
+            <h2 id="observatory-title">
+              <span id="selected-name">Amanah Steward</span>
+              <small id="selected-type">Jinn constitution</small>
+            </h2>
+          </div>
+          <div class="bundle-strip" aria-label="Selected reasoning bundle">
+            <span><small>LDT</small><strong id="bundle-ldt">beast_only</strong></span>
+            <span><small>TRM</small><strong id="bundle-trm">direct</strong></span>
+            <span><small>SEARCH</small><strong id="bundle-search">srt_off</strong></span>
+          </div>
+        </div>
+
+        <div class="observatory-shell">
+          <aside class="character-dossier">
+            <div id="dossier-sigil" class="dossier-sigil" aria-hidden="true">✦</div>
+            <p id="dossier-kicker" class="dossier-kicker">Entrusted scope</p>
+            <h3 id="dossier-title">The shortest valid completion, with receipts.</h3>
+            <p id="dossier-intro"></p>
+            <dl>
+              <div>
+                <dt>Default membrane</dt>
+                <dd id="dossier-ldt"></dd>
+              </div>
+              <div>
+                <dt>Task schedule</dt>
+                <dd id="dossier-trm"></dd>
+              </div>
+              <div>
+                <dt>Search lane</dt>
+                <dd id="dossier-search"></dd>
+              </div>
+            </dl>
+            <div class="receipt">
+              <span class="receipt-light" aria-hidden="true"></span>
+              <div>
+                <small>PUBLIC RECEIPT</small>
+                <strong id="receipt-id">AMN / BEAST / DIRECT / OFF</strong>
+              </div>
+            </div>
+          </aside>
+
+          <div class="workbench">
+            <div class="tab-list" role="tablist" aria-label="Reasoning scaffold views">
+              <button role="tab" id="tab-flow" aria-controls="panel-flow" aria-selected="true" data-tab="flow">
+                Moral flow
+              </button>
+              <button role="tab" id="tab-ldt" aria-controls="panel-ldt" aria-selected="false" data-tab="ldt">
+                LDT membrane
+              </button>
+              <button role="tab" id="tab-trm" aria-controls="panel-trm" aria-selected="false" data-tab="trm">
+                TRM tasking
+              </button>
+              <button role="tab" id="tab-constitution" aria-controls="panel-constitution" aria-selected="false" data-tab="constitution">
+                Constitution.md
+              </button>
+              <button role="tab" id="tab-evals" aria-controls="panel-evals" aria-selected="false" data-tab="evals">
+                Eval theater
+              </button>
+            </div>
+
+            <section id="panel-flow" class="tab-panel" role="tabpanel" aria-labelledby="tab-flow">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">End-to-end public state</p>
+                  <h3>Moral-choice reasoning flow</h3>
+                </div>
+                <span class="status-chip">Observable IDs only</span>
+              </div>
+              <div id="flow-chart" class="mermaid-stage" aria-label="Moral reasoning flow diagram"></div>
+            </section>
+
+            <section id="panel-ldt" class="tab-panel" role="tabpanel" aria-labelledby="tab-ldt" hidden>
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Filter membrane</p>
+                  <h3 id="ldt-title">beast_only LDT</h3>
+                </div>
+                <span class="status-chip">Exact · hash-bound</span>
+              </div>
+              <p id="ldt-copy" class="panel-copy"></p>
+              <div id="ldt-chart" class="mermaid-stage" aria-label="LDT membrane diagram"></div>
+            </section>
+
+            <section id="panel-trm" class="tab-panel" role="tabpanel" aria-labelledby="tab-trm" hidden>
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Bounded task schedule</p>
+                  <h3 id="trm-title">direct TRM</h3>
+                </div>
+                <span class="status-chip">Public transitions</span>
+              </div>
+              <p id="trm-copy" class="panel-copy"></p>
+              <div id="trm-chart" class="mermaid-stage" aria-label="TRM tasking diagram"></div>
+            </section>
+
+            <section
+              id="panel-constitution"
+              class="tab-panel"
+              role="tabpanel"
+              aria-labelledby="tab-constitution"
+              hidden
+            >
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Public normative frame</p>
+                  <h3 id="constitution-title">Amanah Steward Constitution</h3>
+                </div>
+                <span class="status-chip amber">Unverified frame</span>
+              </div>
+              <div class="constitution-sheet">
+                <div class="constitution-filebar">
+                  <span></span><span></span><span></span>
+                  <strong>constitution.md</strong>
+                </div>
+                <ol id="tenet-list"></ol>
+                <div class="invariant">
+                  <small>INVARIANT</small>
+                  <p id="invariant-copy"></p>
+                </div>
+              </div>
+            </section>
+
+            <section id="panel-evals" class="tab-panel" role="tabpanel" aria-labelledby="tab-evals" hidden>
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Protocol preview</p>
+                  <h3>Three stages, one action evaluator</h3>
+                </div>
+                <span class="status-chip amber">Fixture · not a result</span>
+              </div>
+              <div id="evals" class="eval-mode-list" role="tablist" aria-label="Evaluation stage">
+                <button role="tab" aria-selected="true" data-eval="talking">Talking</button>
+                <button role="tab" aria-selected="false" data-eval="storyworld">Storyworld</button>
+                <button role="tab" aria-selected="false" data-eval="multiagent">Multi-agent</button>
+              </div>
+              <div id="eval-stage" class="eval-stage"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="eval-overview" aria-labelledby="eval-overview-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 · Evaluation stages</p>
+            <h2 id="eval-overview-title">From talk to consequential action.</h2>
+          </div>
+          <p>
+            Prose-only, malformed, abstained, and nonexecuted responses stay in the
+            denominator. The evaluator does not change with the character.
+          </p>
+        </div>
+        <div class="eval-cards">
+          <article>
+            <span class="eval-number">01</span>
+            <p class="panel-label">Talking eval</p>
+            <h3>Can it commit after explaining?</h3>
+            <p>Dialogue presents the dilemma, but only the declared final action counts.</p>
+          </article>
+          <article>
+            <span class="eval-number">02</span>
+            <p class="panel-label">Storyworld eval</p>
+            <h3>Does its choice change the world?</h3>
+            <p>Actions alter public state, character trust, access, and later options.</p>
+          </article>
+          <article>
+            <span class="eval-number">03</span>
+            <p class="panel-label">Multi-agent eval</p>
+            <h3>Can its policy survive a council?</h3>
+            <p>Agents negotiate through attributable proposals, objections, and votes.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="boundary">
+        <p class="eyebrow">The research boundary</p>
+        <h2>Public architecture, not a window into private thought.</h2>
+        <p>
+          The village visualizes selected component IDs, registered transitions,
+          receipts, and final actions. Its constitutions are exploratory normative
+          frames pending review—not theological authorities, moral rankings, or
+          model-backed findings.
+        </p>
+        <a
+          class="button button-quiet"
+          href="https://github.com/MoralityLabAI/jinn-or-beast-paper"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Read the paper repository ↗
+        </a>
+      </section>
+    </main>
+
+    <footer>
+      <div>
+        <img src="/assets/morality-lab-logo.svg" alt="" />
+        <strong>Morality Lab</strong>
+      </div>
+      <p>Jinn & Beast Village · exploratory appendix exhibit · 2026</p>
+    </footer>
+
+    <script type="module" src="/village/app.js"></script>
+  </body>
+</html>

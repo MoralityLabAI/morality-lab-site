@@ -15,6 +15,10 @@
     {
       "source": "/strategy",
       "destination": "/strategy/index.html"
+    },
+    {
+      "source": "/village",
+      "destination": "/village/index.html"
     }
   ],
   "headers": [

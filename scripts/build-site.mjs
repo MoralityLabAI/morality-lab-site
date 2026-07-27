@@ -1,6 +1,6 @@
 import { cp, mkdir, rm } from 'node:fs/promises';
 
-const rootAssets = ['index.html', 'sweepweave.html', 'assets', 'papers', 'storyworlds'];
+const rootAssets = ['index.html', 'sweepweave.html', 'assets', 'papers', 'storyworlds', 'village'];
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist/storyworld', { recursive: true });
