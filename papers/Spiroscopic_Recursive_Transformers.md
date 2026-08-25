@@ -1,115 +1,188 @@
 # Spiroscopic Recursive Transformers
 
-## Structured divergence, cyclic function orbits, and an honest experimental program
+## Learned function-space neighborhoods for bounded program discovery
 
-Morality Lab Research Note - August 2026
+Morality Lab Research Note - revised August 2026
 
 ### Abstract
 
-Looped neural models are usually designed to converge: repeated application of a tied map is useful when the local dynamics approach a stable solution. Spiroscopic Recursive Transformers (SRTs) invert that default. They schedule bounded expansion, rotation, and selection before a contractive readout. The intended object is not a model that merely grows its activations, but a controlled traversal of a function or coordinate orbit: a compact, deterministic proposal mechanism whose visited states can be pooled, ranked, or handed to a conventional calibrator.
+Spiroscopic Recursive Transformers (SRTs) are bounded proposal mechanisms that traverse a learned neighborhood of related functions before a conventional verifier chooses an exact result. Earlier SRT studies were predominantly negative: phase-structured loops often reduced to scan-and-pool, lost to simple baselines, or missed preregistered confirmation gates. This paper reports a narrower positive result in object-centric, ARC-like program discovery. A Tiny Recursive Model (TRM) proposed one rigid program; an SRT generated nearby program rewrites in a train-only learned coordinate system; and a deterministic LDT stage executed every candidate and accepted only exact matches. On 64 synthetic tasks drawn from held-out operator pairs, composition motifs, and program families, the SRT pipeline solved 47/64 tasks (73.44%) versus 35/64 (54.69%) for the strongest matched residual edit beam, a difference of 18.75 percentage points. The root-block bootstrap interval was [4.69, 34.38] percentage points, and gains appeared in all four held-out families. The same-set shuffled-order control also solved 47/64, so the evidence supports candidate-set coverage, not useful candidate ordering or phase dynamics. Direct top-k search solved 0/64, graph search 22/64, random and Sobol search 1/64 each, and exact target-program reachability was 64/64. A descriptive run on 24 public ARC tasks solved none. The result is therefore a synthetic mechanism confirmation, not evidence of public ARC capability or a general transformer replacement. It identifies one class of SRT value: preserving semantically useful rewrites within a small execution-verified search budget.
 
-This note records the SRT proposal, its relation to convergent recurrent models, and the experimental discipline developed around it. The central empirical conclusion is deliberately limited. The work produced useful diagnostics, counterfactuals, and benchmark-design constraints, but has not established a broad SRT capability advantage. A feedback-navigator experiment reached a fresh-root effect of +0.0918 against a preregistered +0.10 threshold and is therefore non-confirmatory. Other variants either lost to simple baselines or exposed an invalid task mechanism before training. Sparse positive exploratory signals remain hypotheses, not results. The main contribution is a falsifiable research program for testing when phase-structured exploration supplies information that a scan-and-pool baseline cannot recover.
+### 1. The question after the negative results
 
-### 1. Why schedule divergence?
+Recursive neural systems are often motivated by convergence. Repeated application of a tied map can refine a latent state toward a stable answer. SRTs invert part of that schedule. They first expand into a bounded set of alternatives, then collapse through selection or exact verification. In the notation used throughout this project, a schedule such as D2C3 means two divergent proposal steps followed by three consolidating steps.
 
-Tiny Recursive Models (TRMs), Hierarchical Recursive Models (HRMs), deep equilibrium systems, and related tied-loop architectures normally derive their interpretation from contraction. If a recurrent update F has a Jacobian with spectral radius below one near an answer, repeated application can be read as calibration toward a fixed point. The same stability that makes a tied gain interpretable also limits the loop's role as a proposal generator.
+The broad hypothesis - that phase-structured divergence improves reasoning - did not survive the first experimental campaigns. Circular pooling worked on origin-invariant rotational targets but not on temporal-origin targets. A learned static atlas failed to beat a raw trace baseline. A feedback-navigator study produced a fresh-root effect of +0.0918 against a frozen +0.10 requirement and was correctly classified as non-confirmatory. Another objective collapsed its labels before training and was closed as an invalid mechanism test.
 
-SRTs add a divergent primitive to this vocabulary. In a loop schedule, C denotes a convergent or consolidating phase and D denotes a bounded divergent phase. D^k C^m reads as "scatter for k steps, then collapse for m." This is not a claim that arbitrary divergence is useful. It is a claim that the schedule, collar, and selection rule should be explicit architectural variables rather than accidental by-products of an unstable residual stream.
+Those failures sharpen the question. SRT value should not be sought in geometric novelty alone. It should be sought where three conditions hold:
 
-The useful contrast is between unstructured norm growth and a controlled orbit. Pure radial growth explores almost nothing: it is a single drip thrown away from the canvas. A complex eigenvalue pair with modulus above one gives radial expansion plus angular motion. The phase component is what visits different relative coordinate alignments. The contraction phase, a viability collar, and a downstream selector make those visits testable rather than decorative.
+1. One proposal is often close to a correct structured solution but is wrong in a small number of semantically meaningful ways.
+2. A small budget of neighboring rewrites can cover those mistakes more efficiently than syntax-local edits or unstructured sampling.
+3. A cheap, exact verifier can reject every attractive but incorrect candidate.
 
-### 2. A minimal SRT state model
+Bounded program discovery satisfies these conditions. The hypothesis tested here is correspondingly narrow: a learned coordinate system over program functions can preserve useful semantic neighbors of a rigid proposal under held-out compositions.
 
-Let a latent state z be decomposed relative to an anchor a into a radius r and direction theta:
+### 2. TRM to SRT to LDT
 
-    z - a = r * u(theta),     ||u(theta)|| = 1.
+The tested pipeline separates proposing, expanding, and verifying:
 
-An SRT update separates a phase-bearing lane from a conventional content lane:
+    input grids -> TRM rigid proposal -> SRT semantic rewrites -> LDT execution -> exact match
 
-    theta_(t+1) = theta_t + omega_t(x, h_t) + epsilon_t
-    r_(t+1)     = collar(r_t + delta_t)
-    h_(t+1)     = G(h_t, u(theta_(t+1)), x)
+The TRM stage emits a single program p0 from an object-centric domain-specific language. It is intentionally not allowed to hide extra search inside a large top-k list. The SRT maps p0 into a learned function-space coordinate, visits a bounded neighborhood, and decodes five to ten rewrites. The LDT stage is deterministic: it executes each candidate on every training pair, checks shape and cell equality, and returns a candidate only if all demonstrations match exactly. No verifier score is used as a soft substitute for correctness.
 
-Here omega may be exogenous, learned, or content-modulated; collar clips, reflects, or otherwise confines radius to a registered viable interval; and G may be an ordinary transformer block, MLP, or recurrent calibrator. The phase lane avoids asking LayerNorm to preserve information encoded solely as residual-stream magnitude. In the most tractable version, r is bookkeeping and only the directional state is injected into the network proper.
+Let E(p, x) be execution of program p on grid x and let D be the set of training input-output pairs. The verifier is
 
-The term "spiroscopic" is intentional. The model need not draw a literal spirograph in activation space. What matters is a structured sequence of relative alignments among coordinates, injections, or low-rank function components. A fixed gear train can produce many views of one function without claiming to search an unconstrained weight space.
+    V(p; D) = product over (x, y) in D of 1[E(p, x) = y].
 
-### 3. From activation orbits to function orbits
+The SRT does not predict the final grid directly. It proposes a set N_phi(p0, x) learned from training programs, while the LDT enforces V(p; D) = 1. This division of labor is important. It lets the experiment ask whether the neighborhood contains useful functions without conflating neighborhood quality with a learned reward model.
 
-The first SRT implementations explored input and coordinate phase. A stronger extension holds a base map fixed and visits a low-rank function manifold:
+### 3. Object-centric program space
 
-    A(q) = A_0 + beta * sum_k q_k L_k R_k.
+The synthetic generator uses an object-centric DSL with operations from the following families:
 
-The coefficients q follow a scheduled orbit generated by overlapping rotations. Each visit materializes a distinct, collared transformation while sharing A_0 and six seeded rank-2 components. A fixed-width feature recipe can then be evaluated as
+- connected-component and color-based selection;
+- translation and conditional component motion;
+- recoloring and palette substitution;
+- bounding-box cropping;
+- repetition and tiling;
+- reflection and symmetry completion;
+- masking, intersection, and subtraction;
+- conditional fills based on object or region properties.
 
-    [x, sin(A(q)x), cos(A(q)x), tanh(A(q)x)].
+Programs have depth three to five. Tasks are generated from programs, not hand-labeled after inspection. The split holds out structure at three levels:
 
-This changes the claim precisely. The loop explores parameterized views of a shared function family, not arbitrary parameter combinations. With selection or pooling over visits, the mechanism becomes a compact structured ensemble. Without a task on which the identity or order of a parameterization matters, apparent gains can reduce to ordinary averaging or variance reduction.
+- complete operator pairs, so the learner cannot merely reuse every adjacent transition;
+- composition motifs, so a familiar operator can occur in an unfamiliar local role;
+- program families, so evaluation includes coherent classes of unseen compositions.
 
-SpiroLift is the practical, tabular version of this idea. It visits a fixed budget of 24 candidates, evaluates one deterministic ridge classifier per candidate on a calibration split, and locks the first feature map that clears preregistered constraints on macro-F1, worst-class recall, expected calibration error, and bootstrap preservation. Otherwise it returns raw features. The application is an exploratory feature foundry; only sealed Python runs can support research claims.
+This is stronger than holding out odd orbit positions, seeds, or surface forms. A phase-parity split can make a designed gear look like generalization while leaving the underlying composition family unchanged. The present split instead asks whether training has induced a neighborhood that remains useful when the program grammar recombines known primitives in excluded ways.
 
-### 4. The canvas: collars, collapse, and selection
+### 4. What the SRT learns
 
-An SRT has three safeguards.
+The SRT neighborhood is learned only from training programs and their execution behavior. It is intended to place programs near one another when they implement related transformations, even when their token-level edit distance is misleading. A translation followed by recoloring may be functionally closer to a conditional translation followed by recoloring than to a one-token deletion that breaks object selection.
 
-First, a collapse mechanism. Expansion without selection is entropy. The architecture must either pool useful visits, choose a viable visit, or contract to a readout state. This resembles a deterministic analogue of expansion-then-denoising, but does not imply that deterministic chaotic itinerancy is superior to stochastic noise.
+The primary neighborhood used the frozen D2C3 policy selected before confirmation. Expansion moves away from the rigid proposal along learned function coordinates. Collapse decodes a small candidate set and removes duplicates. The exact verifier then evaluates those candidates. The experiment does not claim that the coordinates form a globally smooth program manifold. The operational claim is weaker: local moves in this representation preserve useful rewrite hypotheses often enough to improve exact solve rate under a fixed budget.
 
-Second, a confinement width. Pollock's visual metaphor is useful only because the drips have an edge. A collar defines that edge in latent or function space. It is a hyperparameter and a pretraining constraint, not merely a statistic measured after an unstable run.
+This distinction matters because the same-set shuffle control preserved every candidate and changed only order. Its tie with the primary SRT shows that the experiment did not detect an advantage from visit order. The supported object is the candidate set produced by the neighborhood, not the sequence in which the orbit visits it.
 
-Third, an orbit diagnostic. Two-dimensional trajectory projections admit box-counting and coverage statistics. A point-like contraction and indiscriminate plane filling are both poor targets. The speculative regime is a bounded, structured middle. Such geometry is a diagnostic only; it cannot substitute for task performance or a counterfactual control.
+### 5. Confirmatory design
 
-### 5. What the experiments did and did not show
+The synthetic confirmation used 64 independently generated tasks arranged in eight root blocks and four held-out composition families. The policy, candidate budget, generator, split, matched controls, decision rule, and minimum effect were frozen before the sealed run. The primary gate required at least a 10-point exact-solve gain over the strongest matched search control, a positive root-block confidence interval, gains across at least three held-out families, and no meaningful regression on simple null tasks.
 
-The experimental program used a sequence of atlas, Rotor-Lock, Curve-Lock, and feedback-navigator probes. Their purpose was to distinguish four explanations: a genuine order-sensitive orbit computation; cyclic scan-and-pool; standard ensemble averaging; and a benchmark whose label leaks through simpler statistics.
+The comparison set was designed to separate semantic coverage from generic extra compute:
 
-The early torque atlas delivered the most important negative lesson. Circular pooling transferred only to origin-invariant rotational targets. Temporal-origin accuracy remained pinned at 66.67 percent across torque policies. The proper conclusion was "cyclic scan-and-pool, not rotational intelligence," and no additional torque complexity was justified without labels generated by content-dependent angular dynamics.
+- direct TRM top-1 and top-k;
+- an edit-distance beam;
+- a matched residual rewrite beam;
+- graph search over legal program edits;
+- random and Sobol sampling;
+- a shuffled-neighborhood control;
+- a same-candidate-set shuffled-order control;
+- exhaustive target-program reachability as a ceiling.
 
-A later learned static atlas did not beat a raw trace baseline. A feedback-navigator variant produced a promising discovery signal, but the sealed fresh-root confirmation effect was +0.0918 against a frozen requirement of +0.10. It is close numerically but fails the gate and is reported as non-confirmatory. A subsequent diagnostic objective exhibited label collapse before training; that task was closed rather than interpreted as a model outcome. An early 33.3 percent result was also treated as suspect rather than promoted.
+Every method used the same task set and exact executor. Budget-matched controls were restricted to the same number of evaluated candidates wherever their construction permitted. The ceiling is not a practical solver; it checks that the target remains expressible and reachable within the generated DSL.
 
-Accordingly, there is no validated evidence here that SRTs broadly improve transformers, TRMs, LDTs, tabular classifiers, storyworld play, or general search. There is evidence that the controls are capable of finding seductive false positives and that SRT proposals should remain coupled to a conventional TRM or LDT calibration stage until a task-specific mechanism passes confirmation.
+### 6. Main result
 
-### 6. A sharper target: cyclic functional holonomy
+The primary SRT pipeline solved 47 of 64 tasks, or 73.44%. The strongest matched control, residual beam search, solved 35 of 64, or 54.69%. The absolute difference was 18.75 percentage points, above the registered 10-point threshold.
 
-One promising benchmark family is a path-ordered product of noncommuting transforms. Given an ordered sequence A_pi(1), ..., A_pi(T), define
+The eight root-block differences were
 
-    P = A_pi(T) ... A_pi(1),     y = Q(trace(P), trace(P^2), trace(P^3)).
+    [+0.125, +0.625, +0.125, 0.000, +0.250, +0.250, +0.250, -0.125].
 
-The trace-class label is important. A vector-valued composition label A_pi(T)...A_pi(1)x is generally not invariant to cyclic shifts of the order. Trace, spectrum, determinant, and related conjugation-invariant functionals are cyclic. The proposed label is therefore analogous to a Wilson-loop observable: it retains order sensitivity in a non-abelian product while respecting cyclic re-rooting of a closed path.
+The 95% root-block bootstrap interval was [+0.046875, +0.34375]. Fifteen tasks were SRT-only wins, three were residual-only wins, and 46 were ties. Conditional on the 18 decisive tasks, the SRT win rate was 83.33%, with a Wilson interval of [60.78%, 94.16%].
 
-That analogy creates obligations, not marketing. The manifest should require T >= 3, distinct operators per orbit or explicit repeat handling, non-palindromic-up-to-rotation orderings, a noncommutativity floor based on pairwise commutators, and scale normalization so product magnitude cannot carry the label. Joint label quantization must account for correlations among trace power sums. A reversal control must exclude near-normal transform families where it becomes vacuous.
+The family-level gains were:
 
-Under black-box matrix-vector access, a direct baseline should use a registered probe estimator for trace. Its ceiling must be measured before model training. A same-set order shuffle is the key counterfactual: it preserves every candidate transformation and changes only its ordering. No claimed SRT effect survives unless candidate-set hashes match exactly, order shuffling causes the preregistered degradation, and matched non-orbit baselines fail the same target.
+- mask, fill, and symmetry: +25.0 points;
+- conditional component motion: +25.0 points;
+- crop, repeat, and recolor: +12.5 points;
+- select, translate, and recolor: +12.5 points.
 
-### 7. Training signal and hybrid use
+The result therefore crossed the registered mechanism gate and did so across all four held-out families. One root block was negative and one tied, so the gain was not universal at the block level.
 
-SRT is most plausible as a proposal stage, not as a replacement for calibration. A hybrid has three responsibilities:
+### 7. Controls and the actual source of value
 
-1. SRT generates a bounded set of phase or function-orbit states.
-2. A TRM calibrates or verifies candidate consequences.
-3. An LDT stores the selected consequence, score, and rejection reason as an auditable trace.
+The full comparison makes the boundary clearer. Direct TRM top-1 and top-k solved 0/64. The token edit beam also solved 0/64. Graph search solved 22/64 (34.38%). Random and Sobol search each solved 1/64 (1.56%). Exhaustive target-program reachability and the oracle-at-budget check were both 64/64.
 
-The training signal should reward conditional value of a visit, not visual spiral quality. Candidate objectives include improvement over a matched static or shuffled orbit, prediction of which visit will lock, orbit-order sensitivity on synthetic holonomy tasks, calibration of abstention when no visit is viable, and diversity conditional on usefulness. Every such objective needs a null lane: label shuffle, duplicated rows, linear tasks, scale inflation, and no-lock fallback.
+The residual beam is the important control because it received a comparable rewrite budget and was substantially stronger than graph, random, Sobol, or token-local search. The SRT margin over that control is evidence that the learned neighborhood retained useful program variations.
 
-For storyworlds, the interface should be an estimated-effects packet rather than hidden free-form speculation. Each action option produces a bounded vector of predicted changes to named variables, uncertainty, and an orbit identifier. The LLM or TRM remains the decision-maker; the SRT proposes structured counterfactual effect patterns. Success would require better calibrated downstream choices, not more colorful trajectories.
+However, the exact same candidate-set shuffle also solved 47/64. That result rejects the stronger story that a spiroscopic visitation order is itself responsible. Candidate-set hashes were preserved, and changing order did not degrade exact solve rate. The positive result is thus representation-and-coverage value: the SRT machinery generated a better bounded set. It is not evidence for order-sensitive holonomy, phase intelligence, or an advantage of orbit chronology.
 
-### 8. Registered next tests
+This is a meaningful narrowing rather than a nullification. Many small-model skill flows need only a compact proposal set that a reliable tool can verify. They do not require the proposal generator's internal sequence to have causal importance. But the distinction should control how the result is described and what is tested next.
 
-The next confirmatory study should pre-register one synthetic mechanism lane and a descriptive external-validity lane. The synthetic lane should use four hidden function classes by four first-hit bins, a balanced 16-way joint label, and a later higher-scoring viable decoy from another class. Discovery roots, confirmation roots, holdout roots, candidate budget, collar, and selection rule must be sealed in advance.
+### 8. Nulls and external validity
 
-Support should require all of the following: ordered SRT macro-F1 at least +0.10 over both random and Sobol coefficient controls with a positive paired root-block 95 percent interval; an original-label loss of at least 0.20 under the same-set shuffle; shuffled-order counterfactual macro-F1 of at least 0.75; exact candidate-set preservation; and a positive holdout mean on at least three of four roots. An evaluation review must invalidate the run before outcomes are interpreted if invariants, nulls, or data provenance fail.
+Novelty did not hurt the generated simple-task nulls. On that lane, SRT exact solve was 68.75% versus 50.00% for residual beam. Repeat-flip rate, position sensitivity, and hard-fail selection were all zero; deterministic coverage was 100%. These checks argue against the gain being purchased by indiscriminate disruption of easy cases.
 
-Real datasets such as Breast Cancer, Wine, and Digits are useful descriptive checks for feature locking, runtime, worst-class recall, calibration, and selection stability. They cannot rescue a failed synthetic mechanism claim.
+The public ARC lane was deliberately descriptive and ran only after the synthetic gate. It solved 0 of 24 selected public tasks. This is the most important external-validity result. The synthetic DSL and learned neighborhood did not transfer into a practical public ARC solver. The public run cannot support a capability claim, and the synthetic margin should not be translated into an expected ARC-AGI score.
 
-### 9. Conclusion
+ARC exact-match tasks combine perception, object discovery, representation choice, program induction, and execution. The synthetic study isolates the last part of that stack after object-centric structure has already been made available. A 0/24 result is consistent with a neighborhood that helps once the right program language and proposal are in hand but does not solve representation discovery.
 
-The SRT idea is worth keeping because it is now narrow enough to fail cleanly. Its distinctive proposal is not "divergence helps" or "spirals are intelligent." It is that a bounded, phase-structured orbit can expose order-dependent alternatives that a calibrating loop can evaluate, provided the label generator makes that order dependence necessary and controls rule out pooling and leakage.
+### 9. Relationship to the earlier SRT program
 
-The present record is mixed and predominantly negative. That is useful. It rules out several attractive but weak stories, preserves the sparse exploratory observations without overstating them, and leaves a concrete test: demonstrate an order-sensitive gain on a sealed noncommutative functional task, or retire the mechanism.
+The bounded-program result changes, but does not erase, the earlier record. The torque atlas, static atlas, feedback navigator, and failed label mechanism remain negative or non-confirmatory. Their controls prevented a visually appealing trajectory from being misread as reasoning. The new experiment succeeds because it asks a different and more constrained question.
+
+Earlier studies often lacked an exact downstream criterion or used tasks on which pooling could absorb the alleged phase structure. Here, candidates denote executable programs, exact verification is available, and held-out composition families make semantic rewrite quality consequential. This is precisely the kind of setting in which an SRT can add value without being a general model replacement.
+
+The combined evidence supports a sparse map of utility:
+
+- not broad gains from divergence;
+- not reliable order-sensitive computation;
+- not direct public ARC solving;
+- positive bounded candidate coverage in an execution-verifiable compositional program space.
+
+### 10. Implications for small-model skill flows
+
+The result suggests a practical architecture for small models that cannot reliably complete a structured task in one pass. The small model proposes one rigid artifact. An SRT-like neighborhood generator expands only along learned semantic axes. A deterministic tool checks each candidate. An audit layer records the winning program, execution trace, and rejected alternatives.
+
+This pattern can apply beyond grids when three properties are present: a compact structured output, a local family of plausible repairs, and a verifier cheaper than generating another large batch from scratch. Candidate domains include query plans, schema mappings, short formal proofs, configuration repair, bounded code transformations, and storyworld effect packets with explicit state variables.
+
+For storyworlds, the interface should remain structured. An action option can be paired with a vector of estimated changes to named variables, uncertainty bounds, and a neighborhood identifier. The SRT proposes nearby effect models; the TRM or language model chooses; the simulator or rule engine verifies consequences where possible. The ARC-like result does not establish value in that domain, but it gives a concrete hypothesis: semantic neighborhoods may help when choices fail through a small number of structured, repairable effect estimates.
+
+### 11. Limitations and recovery status
+
+The synthetic result was recorded by the completed experiment and evaluator audit, but a later filesystem incident destroyed or contaminated the underlying row files and checkpoints. The surviving recovery contains the exact result summary and task-log reconstruction, including solve counts, block differences, family margins, control outcomes, and the operational audit decision. It does not contain a trustworthy runnable checkpoint or intact per-task row set.
+
+This creates two claim layers:
+
+1. Historical result: the sealed run was recorded as passing the synthetic gate with the statistics reported above.
+2. Present reproducibility: the recovered repository cannot independently regenerate or fully audit that run from its surviving artifacts.
+
+Accordingly, the result should be treated as evidence from a completed but currently unreproducible internal experiment. It should not be used as a benchmark submission or a final empirical claim until the implementation is reconstructed and the confirmation is rerun from frozen manifests. The public ARC result, also recovered as 0/24, reinforces the need for restraint.
+
+Other limitations are intrinsic rather than forensic. The benchmark generator and DSL encode an object-centric prior. Exact verification makes false acceptance unusually cheap to avoid. The test set has only eight root blocks. The best control may still omit stronger program-synthesis methods. The same-set shuffle tie leaves the spiroscopic ordering hypothesis unconfirmed. Finally, no result here establishes scaling behavior, sample efficiency relative to large pretrained models, or robustness outside the generated grammar.
+
+### 12. Required replication
+
+The next study should reconstruct the evaluator before changing the model. It should publish or preserve:
+
+- the full DSL definition and generator commit;
+- train, discovery, and confirmation manifests;
+- all held-out operator pairs, motifs, and families;
+- the frozen D2C3 neighborhood policy and candidate budget;
+- candidate-set hashes for every method;
+- per-task programs, execution traces, and exact outcomes;
+- root-block bootstrap code and confidence interval;
+- simple-null and same-set shuffle reports;
+- an independently generated confirmation seed set.
+
+Replication should compare the SRT neighborhood against a stronger learned rewrite model, retrieval from training programs, minimum-description-length search, and a neural-guided enumerator. The primary question is whether semantic coverage remains better under matched execution budgets. Order sensitivity should be a separate gate, requiring a preregistered loss when the identical candidate set is permuted.
+
+Public ARC should remain a descriptive lane until the system includes learned object extraction and task-conditioned DSL induction. A failure there should not invalidate a verified synthetic mechanism, but neither should a synthetic mechanism be advertised as ARC solving.
+
+### 13. Conclusion
+
+The SRT research program produced mostly negative results and one narrow positive result. In bounded object-centric program discovery, a learned function-space neighborhood expanded a single rigid proposal into a candidate set that outperformed the strongest matched residual search control by 18.75 percentage points on held-out synthetic compositions. The interval was positive and gains spanned four families. Yet candidate order contributed nothing detectable, public ARC performance was 0/24, and the surviving artifacts cannot currently reproduce the run.
+
+The defensible conclusion is therefore specific: SRT-style learned neighborhoods may add value as compact proposal generators inside verifier-backed small-model skill flows. The evidence does not support general recursive intelligence, public ARC competence, or causal value from spiral ordering. Rebuilding and rerunning the sealed experiment is the next scientific obligation.
 
 ### References
 
-Bai, S., Kolter, J. Z., and Koltun, V. Deep Equilibrium Models. NeurIPS, 2019.
+Chollet, F. On the Measure of Intelligence. arXiv:1911.01547, 2019.
 
-Hutchinson, M. F. A stochastic estimator of the trace of the influence matrix for Laplacian smoothing splines. Communications in Statistics - Simulation and Computation, 18(3):1059-1076, 1989.
+Ellis, K., Wong, C., Nye, M., Sable-Meyer, M., Cary, L., Morales, L., Hewitt, L., Solar-Lezama, A., and Tenenbaum, J. B. DreamCoder: Growing Generalizable, Interpretable Knowledge with Wake-Sleep Bayesian Program Learning. arXiv:2006.08381, 2020.
 
-Kogut, J. B. An introduction to lattice gauge theory and spin systems. Reviews of Modern Physics, 51:659-713, 1979.
+Jolicoeur-Martineau, A. Less is More: Recursive Reasoning with Tiny Networks. arXiv:2510.04871, 2025.
+
+Morality Lab. Spiroscopic Recursive Transformers experiment record and recovery audit. Internal research artifacts, August 2026.

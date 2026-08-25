@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve generated and uploaded PDFs byte-for-byte and keep binary diffs opaque.
+*.pdf binary
